@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dafa-postgres-prod
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: dafa_sales
+      POSTGRES_USER: dafa_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dafa_secure_password_2024}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dafa_user -d dafa_sales"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dafa-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dafa-app
+    restart: always
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: "postgresql://dafa_user:${POSTGRES_PASSWORD:-dafa_secure_password_2024}@postgres:5432/dafa_sales?schema=public"
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3002}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-in-production}
+      NEXT_PUBLIC_APP_NAME: "Dafa Sales"
+      NEXT_PUBLIC_APP_URL: ${NEXTAUTH_URL:-http://localhost:3002}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dafa-network
+
+volumes:
+  postgres_data_prod:
+    driver: local
+
+networks:
+  dafa-network:
+    driver: bridge
