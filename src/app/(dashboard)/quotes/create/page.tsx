@@ -80,16 +80,16 @@ export default function CreateQuotePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => router.push('/quotes')} className="p-2 hover:bg-gray-100 rounded-lg"><ArrowLeft size={20} /></button>
-        <h1 className="text-2xl font-bold text-[#1e293b]">Tạo báo giá mới</h1>
+        <button onClick={() => router.push('/quotes')} className="p-2 hover:bg-surface-100 rounded-lg"><ArrowLeft size={20} /></button>
+        <h1 className="text-2xl font-bold text-surface-900">Tạo báo giá mới</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Khách hàng *</label>
-              <select value={customerId} onChange={e => setCustomerId(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-surface-700 mb-1">Khách hàng *</label>
+              <select value={customerId} onChange={e => setCustomerId(e.target.value)} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
                 <option value="">Chọn khách hàng</option>
                 {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
               </select>
@@ -100,36 +100,36 @@ export default function CreateQuotePage() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-semibold">Hạng mục báo giá</h3>
-            <button type="button" onClick={() => setItems([...items, { description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])} className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm">
+            <button type="button" onClick={() => setItems([...items, { description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])} className="flex items-center gap-1 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm">
               <Plus size={14} /> Thêm dòng
             </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-surface-50">
                 <tr>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 w-8">#</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500">Sản phẩm</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500">Mô tả</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 w-20">Dài</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 w-20">Rộng</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 w-20">m²</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 w-16">SL</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 w-28">Đơn giá</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 w-16">CK%</th>
-                  <th className="p-3 text-right text-xs font-medium text-gray-500 w-32">Thành tiền</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-8">#</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500">Sản phẩm</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500">Mô tả</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">Dài</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">Rộng</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">m²</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-16">SL</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-28">Đơn giá</th>
+                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-16">CK%</th>
+                  <th className="p-3 text-right text-xs font-medium text-surface-500 w-32">Thành tiền</th>
                   <th className="p-3 w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, i) => (
                   <tr key={i} className="border-t">
-                    <td className="p-2 text-center text-gray-400">{i + 1}</td>
+                    <td className="p-2 text-center text-surface-400">{i + 1}</td>
                     <td className="p-2"><select value={item.productId || ''} onChange={e => updateItem(i, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs"><option value="">Chọn SP</option>{products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></td>
                     <td className="p-2"><input value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" /></td>
                     <td className="p-2"><input type="number" value={item.length || ''} onChange={e => updateItem(i, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" step="0.01" /></td>
                     <td className="p-2"><input type="number" value={item.width || ''} onChange={e => updateItem(i, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" step="0.01" /></td>
-                    <td className="p-2"><input type="number" value={item.area || ''} onChange={e => updateItem(i, 'area', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-gray-50" readOnly={!!(item.length && item.width)} /></td>
+                    <td className="p-2"><input type="number" value={item.area || ''} onChange={e => updateItem(i, 'area', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50" readOnly={!!(item.length && item.width)} /></td>
                     <td className="p-2"><input type="number" value={item.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 1)} className="w-full border rounded px-2 py-1 text-xs" min="1" /></td>
                     <td className="p-2"><input type="number" value={item.unitPrice} onChange={e => updateItem(i, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
                     <td className="p-2"><input type="number" value={item.discount} onChange={e => updateItem(i, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" min="0" max="100" /></td>
@@ -140,20 +140,20 @@ export default function CreateQuotePage() {
               </tbody>
             </table>
           </div>
-          <div className="p-4 border-t bg-gray-50">
+          <div className="p-4 border-t bg-surface-50">
             <div className="max-w-sm ml-auto space-y-2 text-sm">
               <div className="flex justify-between"><span>Tổng hạng mục:</span><span className="font-medium">{formatCurrency(items.reduce((s, i) => s + i.total, 0))}</span></div>
               <div className="flex justify-between items-center"><span>Vận chuyển:</span><input type="number" value={shippingCost} onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
               <div className="flex justify-between items-center"><span>Thi công:</span><input type="number" value={installationCost} onChange={e => setInstallationCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
               <div className="flex justify-between border-t pt-2"><span>Trước VAT:</span><span className="font-semibold">{formatCurrency(subtotal)}</span></div>
               <div className="flex justify-between items-center"><span>VAT:</span><input type="number" value={vatRate} onChange={e => setVatRate(parseFloat(e.target.value) || 0)} className="w-16 border rounded px-2 py-1 text-xs text-right" /><span>% = {formatCurrency(vatAmount)}</span></div>
-              <div className="flex justify-between font-bold text-base border-t pt-2 text-[#1e3a5f]"><span>TỔNG:</span><span>{formatCurrency(grandTotal)}</span></div>
+              <div className="flex justify-between font-bold text-base border-t pt-2 text-surface-900"><span>TỔNG:</span><span>{formatCurrency(grandTotal)}</span></div>
             </div>
           </div>
         </div>
 
         <div className="flex gap-3 justify-end">
-          <button type="button" onClick={() => router.push('/quotes')} className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm">Hủy</button>
+          <button type="button" onClick={() => router.push('/quotes')} className="px-6 py-2.5 border border-surface-300 rounded-lg text-sm">Hủy</button>
           <button type="submit" disabled={saving} className="px-6 py-2.5 gradient-blue text-white rounded-lg text-sm font-medium disabled:opacity-50">
             {saving ? 'Đang tạo...' : 'Tạo báo giá'}
           </button>

@@ -66,24 +66,24 @@ export default function OrderDetailPage() {
   }
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="spinner" /></div>
-  if (!order) return <div className="text-center py-12 text-gray-500">Không tìm thấy đơn hàng</div>
+  if (!order) return <div className="text-center py-12 text-surface-500">Không tìm thấy đơn hàng</div>
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/orders')} className="p-2 hover:bg-gray-100 rounded-lg"><ArrowLeft size={20} /></button>
+          <button onClick={() => router.push('/orders')} className="p-2 hover:bg-surface-100 rounded-lg"><ArrowLeft size={20} /></button>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{order.code}</h1>
-              <span className="badge bg-blue-100 text-blue-800">{ORDER_STATUS_LABELS[order.status]}</span>
+              <span className="badge bg-brand-100 text-blue-800">{ORDER_STATUS_LABELS[order.status]}</span>
               <span className={`badge ${PAYMENT_STATUS_COLORS[order.paymentStatus]}`}>{PAYMENT_STATUS_LABELS[order.paymentStatus]}</span>
             </div>
-            <p className="text-sm text-gray-500">{order.customer.name} · {order.assignedTo.name}</p>
+            <p className="text-sm text-surface-500">{order.customer.name} · {order.assignedTo.name}</p>
           </div>
         </div>
         <div className="flex gap-2">
-          {order.status === 'NEW' && <button onClick={() => handleStatusChange('IN_PRODUCTION')} className="px-3 py-2 bg-amber-500 text-white rounded-lg text-sm">Bắt đầu SX</button>}
+          {order.status === 'NEW' && <button onClick={() => handleStatusChange('IN_PRODUCTION')} className="px-3 py-2 bg-brand-500 text-white rounded-lg text-sm">Bắt đầu SX</button>}
           {order.status === 'IN_PRODUCTION' && <button onClick={() => handleStatusChange('IN_PROGRESS')} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm">Thi công</button>}
           {order.status === 'IN_PROGRESS' && <button onClick={() => handleStatusChange('COMPLETED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Hoàn thành</button>}
           <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 px-4 py-2 gradient-blue text-white rounded-lg text-sm font-medium">
@@ -94,10 +94,10 @@ export default function OrderDetailPage() {
 
       {/* Financial Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-gray-500">Tổng giá trị</p><p className="text-xl font-bold text-[#1e3a5f] mt-1">{formatCurrency(order.total)}</p></div>
-        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-gray-500">Đã thanh toán</p><p className="text-xl font-bold text-green-600 mt-1">{formatCurrency(order.paidAmount)}</p></div>
-        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-gray-500">Còn lại</p><p className="text-xl font-bold text-red-600 mt-1">{formatCurrency(order.remainingAmount)}</p></div>
-        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-gray-500">VAT ({order.vatRate}%)</p><p className="text-xl font-bold text-gray-600 mt-1">{formatCurrency(order.vatAmount)}</p></div>
+        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-surface-500">Tổng giá trị</p><p className="text-xl font-bold text-surface-900 mt-1">{formatCurrency(order.total)}</p></div>
+        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-surface-500">Đã thanh toán</p><p className="text-xl font-bold text-green-600 mt-1">{formatCurrency(order.paidAmount)}</p></div>
+        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-surface-500">Còn lại</p><p className="text-xl font-bold text-red-600 mt-1">{formatCurrency(order.remainingAmount)}</p></div>
+        <div className="bg-white rounded-xl p-4 shadow-sm"><p className="text-xs text-surface-500">VAT ({order.vatRate}%)</p><p className="text-xl font-bold text-surface-600 mt-1">{formatCurrency(order.vatAmount)}</p></div>
       </div>
 
       {/* Items */}
@@ -140,38 +140,38 @@ export default function OrderDetailPage() {
             </tbody>
           </table>
         ) : (
-          <div className="p-8 text-center text-gray-400">Chưa có thanh toán</div>
+          <div className="p-8 text-center text-surface-400">Chưa có thanh toán</div>
         )}
       </div>
 
       {/* Payment Modal */}
       <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Thêm thanh toán">
         <form onSubmit={handleAddPayment} className="space-y-4">
-          <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-700">
+          <div className="bg-brand-50 p-3 rounded-lg text-sm text-brand-700">
             Số tiền còn lại: <span className="font-bold">{formatCurrency(order.remainingAmount)}</span>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Số tiền *</label>
-            <input type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-surface-700 mb-1">Số tiền *</label>
+            <input type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ngày thanh toán *</label>
-            <input type="date" value={paymentForm.paymentDate} onChange={e => setPaymentForm({...paymentForm, paymentDate: e.target.value})} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-surface-700 mb-1">Ngày thanh toán *</label>
+            <input type="date" value={paymentForm.paymentDate} onChange={e => setPaymentForm({...paymentForm, paymentDate: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phương thức</label>
-            <select value={paymentForm.method} onChange={e => setPaymentForm({...paymentForm, method: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <label className="block text-sm font-medium text-surface-700 mb-1">Phương thức</label>
+            <select value={paymentForm.method} onChange={e => setPaymentForm({...paymentForm, method: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
               <option value="transfer">Chuyển khoản</option>
               <option value="cash">Tiền mặt</option>
               <option value="check">Séc</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mã giao dịch</label>
-            <input value={paymentForm.reference} onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-surface-700 mb-1">Mã giao dịch</label>
+            <input value={paymentForm.reference} onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowPaymentModal(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-sm">Hủy</button>
+            <button type="button" onClick={() => setShowPaymentModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm">Hủy</button>
             <button type="submit" disabled={saving} className="flex-1 py-2 gradient-blue text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang lưu...' : 'Thêm'}</button>
           </div>
         </form>

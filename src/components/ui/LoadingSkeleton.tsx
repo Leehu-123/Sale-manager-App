@@ -16,7 +16,7 @@ export function SkeletonText({ className, lines = 1 }: { className?: string; lin
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn('bg-white rounded-xl p-5 shadow-sm border border-gray-200', className)}>
+    <div className={cn('bg-white rounded-xl p-5 shadow-sm border border-surface-200', className)}>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-lg animate-shimmer" />
         <div className="flex-1 space-y-2">
@@ -31,11 +31,11 @@ export function SkeletonCard({ className }: { className?: string }) {
 
 export function SkeletonTable({ rows = 5, cols = 5 }: { rows?: number; cols?: number }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-surface-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b-2 border-gray-200 bg-gray-50">
+            <tr className="border-b-2 border-surface-200 bg-surface-50">
               {Array.from({ length: cols }).map((_, i) => (
                 <th key={i} className="px-4 py-3">
                   <div className="h-3 w-16 rounded animate-shimmer" />
@@ -45,7 +45,7 @@ export function SkeletonTable({ rows = 5, cols = 5 }: { rows?: number; cols?: nu
           </thead>
           <tbody>
             {Array.from({ length: rows }).map((_, r) => (
-              <tr key={r} className="border-b border-gray-100">
+              <tr key={r} className="border-b border-surface-100">
                 {Array.from({ length: cols }).map((_, c) => (
                   <td key={c} className="px-4 py-3">
                     <div className="h-4 rounded animate-shimmer" style={{ width: `${60 + Math.random() * 40}%` }} />

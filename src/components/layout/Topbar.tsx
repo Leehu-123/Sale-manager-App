@@ -11,6 +11,8 @@ import {
   LogOut,
   User,
   Settings,
+  ChevronDown,
+  Menu,
 } from 'lucide-react'
 
 const pageTitles: Record<string, string> = {
@@ -65,23 +67,36 @@ export function Topbar() {
   }, [])
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
+    <header className="h-16 bg-white border-b border-surface-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shrink-0 print:hidden">
       {/* Left: Title + breadcrumbs */}
-      <div>
-        <h1 className="text-lg font-semibold text-[#1e293b]">{title}</h1>
-        <div className="flex items-center gap-1 text-xs text-gray-400 -mt-0.5">
+      <div className="hidden lg:block">
+        <h1 className="text-lg font-semibold text-surface-900">{title}</h1>
+        <div className="flex items-center gap-1 text-xs text-surface-400 -mt-0.5">
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1">
               {i > 0 && <ChevronRight size={10} />}
               {crumb.href ? (
-                <a href={crumb.href} className="hover:text-[#3b82f6] transition-colors">
+                <a href={crumb.href} className="hover:text-brand-600 transition-colors">
                   {crumb.label}
                 </a>
               ) : (
-                <span className="text-gray-500">{crumb.label}</span>
+                <span className="text-surface-500">{crumb.label}</span>
               )}
             </span>
           ))}
+        </div>
+      </div>
+
+      {/* Mobile left side */}
+      <div className="flex items-center gap-3 lg:hidden">
+        <button className="p-2 rounded-lg hover:bg-surface-200 transition-colors duration-200">
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+            <span className="text-white font-bold text-xs">DF</span>
+          </div>
+          <span className="font-bold text-surface-900 text-sm">DAFA Sales</span>
         </div>
       </div>
 
@@ -89,13 +104,13 @@ export function Topbar() {
       <div className="flex items-center gap-2">
         {/* Search toggle */}
         {showSearch && (
-          <div className="animate-slide-in">
+          <div className="animate-slide-in hidden sm:block">
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
               <input
                 type="text"
                 placeholder="Tìm kiếm nhanh..."
-                className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg w-56"
+                className="pl-8 pr-3 py-1.5 text-sm border border-surface-300 rounded-lg w-56 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200"
                 autoFocus
                 onBlur={() => setShowSearch(false)}
               />
@@ -105,49 +120,68 @@ export function Topbar() {
         {!showSearch && (
           <button
             onClick={() => setShowSearch(true)}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-surface-200 transition-colors duration-200 text-surface-400 hidden sm:block"
           >
             <Search size={18} />
           </button>
         )}
 
         {/* Notifications */}
-        <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors relative">
-          <Bell size={18} />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
+        <div className="relative">
+          <button 
+            className="p-2 rounded-lg hover:bg-surface-200 transition-colors duration-200 text-surface-400 relative"
+            onClick={() => {
+              const el = document.getElementById('noti-dropdown')
+              if (el) el.classList.toggle('hidden')
+            }}
+          >
+            <Bell size={18} />
+          </button>
+          <div id="noti-dropdown" className="hidden absolute right-0 top-full mt-1 w-64 bg-white rounded-xl shadow-lg border border-surface-200 py-2 z-50">
+            <div className="px-4 py-2 border-b border-surface-100">
+              <p className="text-sm font-semibold text-surface-900">Thông báo</p>
+            </div>
+            <div className="px-4 py-6 text-center text-surface-500 text-sm">
+              Không có thông báo mới
+            </div>
+          </div>
+        </div>
 
         {/* User dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 hover:bg-surface-50 rounded-lg px-3 py-1.5 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-[#1e3a5f] flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 text-xs font-bold">
               {getInitials(userName)}
             </div>
-            <div className="text-left hidden md:block">
-              <p className="text-sm font-medium text-gray-700">{userName}</p>
-              <p className="text-[10px] text-gray-400">{ROLE_LABELS[userRole] || userRole}</p>
+            <div className="text-left hidden sm:block">
+              <p className="text-sm font-medium text-surface-900">{userName}</p>
+              <p className="text-[10px] text-surface-500">{ROLE_LABELS[userRole] || userRole}</p>
             </div>
+            <ChevronDown className="w-4 h-4 text-surface-400 hidden sm:block" />
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1 animate-scale-in z-50">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-800">{userName}</p>
-                <p className="text-xs text-gray-500">{userEmail}</p>
+            <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-lg border border-surface-200 py-1 animate-scale-in z-50">
+              <div className="px-4 py-3 border-b border-surface-100">
+                <p className="text-sm font-medium text-surface-900">{userName}</p>
+                <p className="text-xs text-surface-500">{userEmail}</p>
+                <span className="badge bg-brand-100 text-brand-700 mt-1">
+                  {ROLE_LABELS[userRole] || userRole}
+                </span>
               </div>
-              <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50">
+              <a href="/users/me" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-surface-600 hover:bg-surface-50 transition-colors">
                 <User size={16} /> Hồ sơ cá nhân
-              </button>
-              <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50">
+              </a>
+              <a href="/settings" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-surface-600 hover:bg-surface-50 transition-colors">
                 <Settings size={16} /> Cài đặt
-              </button>
-              <div className="border-t border-gray-100" />
+              </a>
+              <div className="border-t border-surface-100" />
               <button
                 onClick={() => signOut({ callbackUrl: '/login' })}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut size={16} /> Đăng xuất
               </button>

@@ -83,7 +83,7 @@ export function DataTable<T>({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-surface-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="data-table w-full">
             <thead>
@@ -106,17 +106,17 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+      <div className="bg-white rounded-xl shadow-sm border border-surface-200 p-12 text-center">
         <div className="flex flex-col items-center gap-3">
-          {emptyIcon || <Inbox size={48} className="text-gray-300" />}
-          <p className="text-gray-500 text-sm">{emptyMessage}</p>
+          {emptyIcon || <Inbox size={48} className="text-surface-300" />}
+          <p className="text-surface-500 text-sm">{emptyMessage}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-surface-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="data-table w-full">
           <thead>
@@ -126,7 +126,7 @@ export function DataTable<T>({
                   key={col.key}
                   className={cn(
                     'text-left whitespace-nowrap',
-                    col.sortable && 'cursor-pointer select-none hover:text-[#1e3a5f]',
+                    col.sortable && 'cursor-pointer select-none hover:text-surface-900',
                     col.className
                   )}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -167,7 +167,7 @@ export function DataTable<T>({
       </div>
 
       {page !== undefined && totalPages !== undefined && onPageChange && (
-        <div className="px-4 py-3 border-t border-gray-100">
+        <div className="px-4 py-3 border-t border-surface-100">
           <Pagination
             page={page}
             totalPages={totalPages}

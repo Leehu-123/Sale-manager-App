@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Save, Printer } from 'lucide-react'
 import { formatCurrency, QUOTE_STATUS_LABELS, PRODUCT_UNIT_LABELS } from '@/lib/utils'
 
 interface QuoteItem {
@@ -121,28 +121,56 @@ export default function QuoteDetailPage() {
     } catch { alert('Có lỗi xảy ra') }
   }
 
+  const handleCreateOrder = async () => {
+    if (!confirm('Bạn có chắc muốn tạo đơn hàng từ báo giá này?')) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quoteId: quote?.id,
+          customerId: quote?.customer.id,
+          discount: 0,
+        })
+      })
+      if (res.ok) {
+        const order = await res.json()
+        router.push(`/orders/${order.id}`)
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Có lỗi xảy ra')
+      }
+    } catch { alert('Có lỗi xảy ra') }
+    finally { setSaving(false) }
+  }
+
   if (loading) return <div className="flex items-center justify-center h-64"><div className="spinner" /></div>
-  if (!quote) return <div className="text-center py-12 text-gray-500">Không tìm thấy báo giá</div>
+  if (!quote) return <div className="text-center py-12 text-surface-500">Không tìm thấy báo giá</div>
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/quotes')} className="p-2 hover:bg-gray-100 rounded-lg"><ArrowLeft size={20} /></button>
+          <button onClick={() => router.push('/quotes')} className="p-2 hover:bg-surface-100 rounded-lg print:hidden"><ArrowLeft size={20} /></button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-[#1e293b]">{quote.code}</h1>
-              <span className={`badge ${quote.status === 'APPROVED' ? 'bg-green-100 text-green-800' : quote.status === 'DRAFT' ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'}`}>
+              <h1 className="text-2xl font-bold text-surface-900">{quote.code}</h1>
+              <span className={`badge ${quote.status === 'APPROVED' ? 'bg-green-100 text-green-800' : quote.status === 'DRAFT' ? 'bg-surface-100 text-surface-800' : 'bg-brand-100 text-blue-800'}`}>
                 {QUOTE_STATUS_LABELS[quote.status]}
               </span>
             </div>
-            <p className="text-sm text-gray-500">Khách hàng: {quote.customer.name} · Tạo bởi: {quote.createdBy.name}</p>
+            <p className="text-sm text-surface-500">Khách hàng: {quote.customer.name} · Tạo bởi: {quote.createdBy.name}</p>
           </div>
         </div>
         <div className="flex gap-2">
-          {quote.status === 'DRAFT' && <button onClick={() => handleStatusChange('SENT')} className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm">Gửi khách</button>}
+          {quote.status === 'DRAFT' && <button onClick={() => handleStatusChange('SENT')} className="px-3 py-2 bg-brand-500 text-white rounded-lg text-sm">Gửi khách</button>}
           {quote.status === 'SENT' && <button onClick={() => handleStatusChange('APPROVED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Duyệt</button>}
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 gradient-navy text-white rounded-lg text-sm font-medium disabled:opacity-50">
+          {quote.status === 'APPROVED' && <button onClick={handleCreateOrder} disabled={saving} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm disabled:opacity-50">Tạo đơn hàng</button>}
+          <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-white border border-surface-300 rounded-lg text-sm font-medium hover:bg-surface-50 print:hidden">
+            <Printer size={16} /> In báo giá
+          </button>
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50 print:hidden">
             <Save size={16} /> {saving ? 'Đang lưu...' : 'Lưu'}
           </button>
         </div>
@@ -151,10 +179,10 @@ export default function QuoteDetailPage() {
       {/* Customer Info */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          <div><span className="text-gray-500">Khách hàng:</span> <span className="font-medium">{quote.customer.name}</span></div>
-          <div><span className="text-gray-500">Mã KH:</span> <span className="font-mono">{quote.customer.code}</span></div>
-          {quote.customer.phone && <div><span className="text-gray-500">SĐT:</span> {quote.customer.phone}</div>}
-          {quote.customer.email && <div><span className="text-gray-500">Email:</span> {quote.customer.email}</div>}
+          <div><span className="text-surface-500">Khách hàng:</span> <span className="font-medium">{quote.customer.name}</span></div>
+          <div><span className="text-surface-500">Mã KH:</span> <span className="font-mono">{quote.customer.code}</span></div>
+          {quote.customer.phone && <div><span className="text-surface-500">SĐT:</span> {quote.customer.phone}</div>}
+          {quote.customer.email && <div><span className="text-surface-500">Email:</span> {quote.customer.email}</div>}
         </div>
       </div>
 
@@ -162,43 +190,47 @@ export default function QuoteDetailPage() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 border-b flex items-center justify-between">
           <h3 className="font-semibold">Hạng mục báo giá</h3>
-          <button onClick={addItem} className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100">
+          <button onClick={addItem} className="flex items-center gap-1 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm hover:bg-brand-100">
             <Plus size={14} /> Thêm dòng
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-surface-50">
               <tr>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-8">#</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500">Sản phẩm</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500">Mô tả</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-20">Dày</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-20">Dài</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-20">Rộng</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-20">m²</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-16">SL</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-28">Đơn giá</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 w-16">CK%</th>
-                <th className="p-3 text-right text-xs font-medium text-gray-500 w-32">Thành tiền</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-8">#</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500">Sản phẩm</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500">Mô tả</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">Dày</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">Dài</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">Rộng</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">m²</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-16">SL</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-28">Đơn giá</th>
+                <th className="p-3 text-left text-xs font-medium text-surface-500 w-16">CK%</th>
+                <th className="p-3 text-right text-xs font-medium text-surface-500 w-32">Thành tiền</th>
                 <th className="p-3 w-10"></th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, index) => (
-                <tr key={index} className="border-t hover:bg-gray-50">
-                  <td className="p-2 text-center text-gray-400">{index + 1}</td>
+                <tr key={index} className="border-t hover:bg-surface-50">
+                  <td className="p-2 text-center text-surface-400">{index + 1}</td>
                   <td className="p-2">
-                    <select value={item.productId || ''} onChange={e => updateItem(index, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs">
+                    <select value={item.productId || ''} onChange={e => updateItem(index, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden">
                       <option value="">Chọn SP</option>
                       {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
+                    <div className="hidden print:block text-xs">{products.find(p => p.id === item.productId)?.name || ''}</div>
                   </td>
-                  <td className="p-2"><input value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" /></td>
+                  <td className="p-2">
+                    <input value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
+                    <div className="hidden print:block text-xs whitespace-pre-wrap">{item.description}</div>
+                  </td>
                   <td className="p-2"><input value={item.thickness || ''} onChange={e => updateItem(index, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" placeholder="mm" /></td>
                   <td className="p-2"><input type="number" value={item.length || ''} onChange={e => updateItem(index, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" step="0.01" /></td>
                   <td className="p-2"><input type="number" value={item.width || ''} onChange={e => updateItem(index, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" step="0.01" /></td>
-                  <td className="p-2"><input type="number" value={item.area || ''} onChange={e => updateItem(index, 'area', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-gray-50" step="0.01" /></td>
+                  <td className="p-2"><input type="number" value={item.area || ''} onChange={e => updateItem(index, 'area', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50" step="0.01" /></td>
                   <td className="p-2"><input type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} className="w-full border rounded px-2 py-1 text-xs" min="1" /></td>
                   <td className="p-2"><input type="number" value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
                   <td className="p-2"><input type="number" value={item.discount} onChange={e => updateItem(index, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" min="0" max="100" /></td>
@@ -211,7 +243,7 @@ export default function QuoteDetailPage() {
         </div>
 
         {/* Totals */}
-        <div className="p-4 border-t bg-gray-50">
+        <div className="p-4 border-t bg-surface-50">
           <div className="max-w-sm ml-auto space-y-2">
             <div className="flex justify-between text-sm">
               <span>Tổng hạng mục:</span>
@@ -234,7 +266,7 @@ export default function QuoteDetailPage() {
               <input type="number" value={vatRate} onChange={e => setVatRate(parseFloat(e.target.value) || 0)} className="w-16 border rounded px-2 py-1 text-xs text-right" min="0" max="100" />
               <span>{formatCurrency(vatAmount)}</span>
             </div>
-            <div className="flex justify-between text-base font-bold border-t pt-2 text-[#1e3a5f]">
+            <div className="flex justify-between text-base font-bold border-t pt-2 text-surface-900">
               <span>TỔNG CỘNG:</span>
               <span>{formatCurrency(grandTotal)}</span>
             </div>
@@ -243,14 +275,16 @@ export default function QuoteDetailPage() {
       </div>
 
       {/* Terms & Notes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Điều khoản báo giá</label>
-          <textarea value={terms} onChange={e => setTerms(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" rows={4} placeholder="Nhập điều khoản..." />
+          <label className="block text-sm font-medium text-surface-700 mb-2">Điều khoản báo giá</label>
+          <textarea value={terms} onChange={e => setTerms(e.target.value)} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm print:hidden" rows={4} placeholder="Nhập điều khoản..." />
+          <div className="hidden print:block text-sm whitespace-pre-wrap">{terms}</div>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" rows={4} placeholder="Ghi chú thêm..." />
+          <label className="block text-sm font-medium text-surface-700 mb-2">Ghi chú</label>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm print:hidden" rows={4} placeholder="Ghi chú thêm..." />
+          <div className="hidden print:block text-sm whitespace-pre-wrap">{notes}</div>
         </div>
       </div>
     </div>

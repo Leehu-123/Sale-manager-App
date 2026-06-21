@@ -111,6 +111,7 @@ export const CUSTOMER_SOURCE_LABELS: Record<string, string> = {
   RETURNING: 'Khách cũ',
   TELESALES: 'Telesales',
   SHOWROOM: 'Showroom',
+  FIELD_MARKETING: 'Khách đi thị trường',
   OTHER: 'Khác',
 }
 
@@ -218,39 +219,39 @@ export const USER_STATUS_LABELS: Record<string, string> = {
 
 // Status color mappings
 export const CUSTOMER_STATUS_COLORS: Record<string, string> = {
-  NEW: 'bg-blue-100 text-blue-800',
+  NEW: 'bg-brand-100 text-blue-800',
   CONTACTED: 'bg-cyan-100 text-cyan-800',
   CONSULTING: 'bg-indigo-100 text-indigo-800',
   QUOTE_SENT: 'bg-purple-100 text-purple-800',
-  NEGOTIATING: 'bg-amber-100 text-amber-800',
+  NEGOTIATING: 'bg-brand-100 text-amber-800',
   PURCHASED: 'bg-green-100 text-green-800',
-  NO_NEED: 'bg-gray-100 text-gray-800',
+  NO_NEED: 'bg-surface-100 text-surface-800',
   UNREACHABLE: 'bg-red-100 text-red-800',
   FOLLOW_UP: 'bg-orange-100 text-orange-800',
 }
 
 export const OPPORTUNITY_STAGE_COLORS: Record<string, string> = {
-  NEW_LEAD: 'bg-blue-100 text-blue-800',
+  NEW_LEAD: 'bg-brand-100 text-blue-800',
   CONTACTED: 'bg-cyan-100 text-cyan-800',
   SURVEYED: 'bg-teal-100 text-teal-800',
   CONSULTING: 'bg-indigo-100 text-indigo-800',
   QUOTE_SENT: 'bg-purple-100 text-purple-800',
-  NEGOTIATING: 'bg-amber-100 text-amber-800',
+  NEGOTIATING: 'bg-brand-100 text-amber-800',
   CONTRACT_PENDING: 'bg-yellow-100 text-yellow-800',
   WON: 'bg-green-100 text-green-800',
   LOST: 'bg-red-100 text-red-800',
 }
 
 export const TASK_PRIORITY_COLORS: Record<string, string> = {
-  LOW: 'bg-gray-100 text-gray-800',
-  MEDIUM: 'bg-blue-100 text-blue-800',
+  LOW: 'bg-surface-100 text-surface-800',
+  MEDIUM: 'bg-brand-100 text-blue-800',
   HIGH: 'bg-orange-100 text-orange-800',
   URGENT: 'bg-red-100 text-red-800',
 }
 
 export const TASK_STATUS_COLORS: Record<string, string> = {
-  TODO: 'bg-gray-100 text-gray-800',
-  IN_PROGRESS: 'bg-blue-100 text-blue-800',
+  TODO: 'bg-surface-100 text-surface-800',
+  IN_PROGRESS: 'bg-brand-100 text-blue-800',
   DONE: 'bg-green-100 text-green-800',
   OVERDUE: 'bg-red-100 text-red-800',
 }

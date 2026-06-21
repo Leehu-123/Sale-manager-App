@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Plus, Search, UserCog, Shield, Users as UsersIcon } from 'lucide-react'
+import { Plus, Search, UserCog, Shield, Users as UsersIcon, Trash2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { formatDate } from '@/lib/utils'
 
@@ -16,9 +16,9 @@ interface User {
 interface Team { id: string; name: string; _count: { users: number } }
 
 const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', MANAGER: 'Quản lý', SALES: 'Nhân viên' }
-const ROLE_COLORS: Record<string, string> = { ADMIN: 'bg-red-100 text-red-800', MANAGER: 'bg-purple-100 text-purple-800', SALES: 'bg-blue-100 text-blue-800' }
+const ROLE_COLORS: Record<string, string> = { ADMIN: 'bg-red-100 text-red-800', MANAGER: 'bg-purple-100 text-purple-800', SALES: 'bg-brand-100 text-blue-800' }
 const STATUS_LABELS: Record<string, string> = { ACTIVE: 'Hoạt động', ON_LEAVE: 'Nghỉ phép', INACTIVE: 'Ngừng HĐ' }
-const STATUS_COLORS: Record<string, string> = { ACTIVE: 'bg-green-100 text-green-800', ON_LEAVE: 'bg-amber-100 text-amber-800', INACTIVE: 'bg-gray-100 text-gray-500' }
+const STATUS_COLORS: Record<string, string> = { ACTIVE: 'bg-green-100 text-green-800', ON_LEAVE: 'bg-brand-100 text-amber-800', INACTIVE: 'bg-surface-100 text-surface-500' }
 
 export default function UsersPage() {
   const { data: session } = useSession()
@@ -85,6 +85,29 @@ export default function UsersPage() {
     finally { setSaving(false) }
   }
 
+  const handleDeleteTeam = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Bạn có chắc muốn xóa team này?')) return
+    try {
+      const res = await fetch(`/api/teams/${id}`, { method: 'DELETE' })
+      if (res.ok) fetchData()
+      else { const err = await res.json(); alert(err.error || err.message || 'Lỗi xóa team') }
+    } catch { alert('Có lỗi xảy ra') }
+  }
+
+  const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Bạn có chắc muốn xóa nhân viên này? Dữ liệu sẽ không thể khôi phục.')) return
+    try {
+      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.message) alert(data.message) // Alert if soft deleted
+        fetchData()
+      } else { const err = await res.json(); alert(err.error || 'Lỗi xóa nhân viên') }
+    } catch { alert('Có lỗi xảy ra') }
+  }
+
   const handleEdit = (user: User) => {
     setEditUser(user)
     setForm({ name: user.name, email: user.email, password: '', phone: user.phone || '', role: user.role, teamId: user.teamId || '', status: user.status })
@@ -94,22 +117,22 @@ export default function UsersPage() {
   const isAdmin = session?.user?.role === 'ADMIN'
 
   if (!isAdmin && session?.user?.role !== 'MANAGER') {
-    return <div className="text-center py-12 text-gray-500"><Shield size={48} className="mx-auto mb-3 text-gray-300" /><p className="font-medium">Bạn không có quyền truy cập trang này</p></div>
+    return <div className="text-center py-12 text-surface-500"><Shield size={48} className="mx-auto mb-3 text-surface-300" /><p className="font-medium">Bạn không có quyền truy cập trang này</p></div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Quản lý nhân sự</h1>
-          <p className="text-gray-500 text-sm mt-1">Quản lý đội ngũ kinh doanh và phân quyền</p>
+          <h1 className="text-2xl font-bold text-surface-900">Quản lý nhân sự</h1>
+          <p className="text-surface-500 text-sm mt-1">Quản lý đội ngũ kinh doanh và phân quyền</p>
         </div>
         {isAdmin && (
           <div className="flex gap-2">
-            <button onClick={() => setShowTeamModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">
+            <button onClick={() => setShowTeamModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-surface-300 text-surface-700 rounded-lg text-sm font-medium hover:bg-surface-50">
               <UsersIcon size={16} /> Thêm team
             </button>
-            <button onClick={() => { setEditUser(null); setForm({ name: '', email: '', password: '123456', phone: '', role: 'SALES', teamId: '', status: 'ACTIVE' }); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 gradient-blue text-white rounded-lg text-sm font-medium">
+            <button onClick={() => { setEditUser(null); setForm({ name: '', email: '', password: '123456', phone: '', role: 'SALES', teamId: '', status: 'ACTIVE' }); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
               <Plus size={16} /> Thêm nhân viên
             </button>
           </div>
@@ -119,14 +142,17 @@ export default function UsersPage() {
       {/* Teams Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {teams.map(team => (
-          <div key={team.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div key={team.id} className="bg-white rounded-xl p-4 shadow-sm border border-surface-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-[#1e293b]">{team.name}</h3>
-              <span className="text-sm text-gray-500">{team._count.users} thành viên</span>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-surface-900">{team.name}</h3>
+                {isAdmin && <button onClick={(e) => handleDeleteTeam(team.id, e)} className="p-1 hover:bg-red-50 text-red-500 rounded"><Trash2 size={14} /></button>}
+              </div>
+              <span className="text-sm text-surface-500">{team._count.users} thành viên</span>
             </div>
             <div className="mt-3 flex flex-wrap gap-1">
               {users.filter(u => u.teamId === team.id).map(u => (
-                <span key={u.id} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">{u.name}</span>
+                <span key={u.id} className="text-xs px-2 py-1 bg-brand-50 text-brand-700 rounded">{u.name}</span>
               ))}
             </div>
           </div>
@@ -136,14 +162,14 @@ export default function UsersPage() {
       {/* Filters */}
       <div className="bg-white rounded-xl p-4 shadow-sm flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm nhân viên..." className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm nhân viên..." className="w-full pl-9 pr-4 py-2 border border-surface-200 rounded-lg text-sm" />
         </div>
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="border border-surface-200 rounded-lg px-3 py-2 text-sm">
           <option value="">Vai trò</option>
           {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <select value={teamFilter} onChange={e => setTeamFilter(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+        <select value={teamFilter} onChange={e => setTeamFilter(e.target.value)} className="border border-surface-200 rounded-lg px-3 py-2 text-sm">
           <option value="">Tất cả team</option>
           {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
@@ -153,16 +179,16 @@ export default function UsersPage() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <table className="w-full data-table">
           <thead>
-            <tr><th>Tên</th><th>Email</th><th>SĐT</th><th>Vai trò</th><th>Team</th><th>Trạng thái</th><th>KH</th><th>Cơ hội</th><th>ĐH</th><th>Ngày tạo</th></tr>
+            <tr><th>Tên</th><th>Email</th><th>SĐT</th><th>Vai trò</th><th>Team</th><th>Trạng thái</th><th>KH</th><th>Cơ hội</th><th>ĐH</th><th>Ngày tạo</th><th></th></tr>
           </thead>
           <tbody>
             {loading ? (
-              [...Array(5)].map((_, i) => <tr key={i}>{[...Array(10)].map((_, j) => <td key={j}><div className="h-4 bg-gray-100 rounded animate-pulse" /></td>)}</tr>)
+              [...Array(5)].map((_, i) => <tr key={i}>{[...Array(10)].map((_, j) => <td key={j}><div className="h-4 bg-surface-100 rounded animate-pulse" /></td>)}</tr>)
             ) : users.length === 0 ? (
-              <tr><td colSpan={10} className="text-center py-12 text-gray-400"><UserCog size={48} className="mx-auto mb-3 text-gray-300" /><p>Chưa có nhân viên</p></td></tr>
+              <tr><td colSpan={10} className="text-center py-12 text-surface-400"><UserCog size={48} className="mx-auto mb-3 text-surface-300" /><p>Chưa có nhân viên</p></td></tr>
             ) : (
               users.map(user => (
-                <tr key={user.id} onClick={() => isAdmin ? handleEdit(user) : null} className={isAdmin ? 'cursor-pointer hover:bg-blue-50/50' : ''}>
+                <tr key={user.id} onClick={() => isAdmin ? handleEdit(user) : null} className={isAdmin ? 'cursor-pointer hover:bg-brand-50/50' : ''}>
                   <td className="font-medium">{user.name}</td>
                   <td className="text-sm">{user.email}</td>
                   <td className="text-sm">{user.phone || '-'}</td>
@@ -172,7 +198,19 @@ export default function UsersPage() {
                   <td className="text-center">{user._count.customers}</td>
                   <td className="text-center">{user._count.opportunities}</td>
                   <td className="text-center">{user._count.orders}</td>
-                  <td className="text-sm text-gray-500">{formatDate(user.createdAt)}</td>
+                  <td className="text-sm text-surface-500">{formatDate(user.createdAt)}</td>
+                  <td>
+                    {isAdmin && session?.user?.id !== user.id && (
+                      <div className="flex items-center gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(user) }} className="p-1.5 hover:bg-brand-50 text-brand-600 rounded" title="Sửa nhân viên">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button onClick={(e) => handleDeleteUser(user.id, e)} className="p-1.5 hover:bg-red-50 text-red-600 rounded" title="Xóa nhân viên">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
@@ -184,35 +222,35 @@ export default function UsersPage() {
       <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditUser(null) }} title={editUser ? 'Sửa thông tin nhân viên' : 'Thêm nhân viên mới'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên *</label>
-            <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-surface-700 mb-1">Họ tên *</label>
+            <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
           {!editUser && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-              <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-surface-700 mb-1">Email *</label>
+              <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{editUser ? 'Đổi mật khẩu' : 'Mật khẩu *'}</label>
-              <input value={form.password} onChange={e => setForm({...form, password: e.target.value})} required={!editUser} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder={editUser ? 'Để trống nếu không đổi' : '123456'} />
+              <label className="block text-sm font-medium text-surface-700 mb-1">{editUser ? 'Đổi mật khẩu' : 'Mật khẩu *'}</label>
+              <input value={form.password} onChange={e => setForm({...form, password: e.target.value})} required={!editUser} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={editUser ? 'Để trống nếu không đổi' : '123456'} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">SĐT</label>
-              <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-surface-700 mb-1">SĐT</label>
+              <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
-              <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-surface-700 mb-1">Vai trò</label>
+              <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
                 {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
-              <select value={form.teamId} onChange={e => setForm({...form, teamId: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-surface-700 mb-1">Team</label>
+              <select value={form.teamId} onChange={e => setForm({...form, teamId: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
                 <option value="">Chọn team</option>
                 {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
@@ -220,15 +258,15 @@ export default function UsersPage() {
           </div>
           {editUser && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-surface-700 mb-1">Trạng thái</label>
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
                 {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
           )}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => { setShowModal(false); setEditUser(null) }} className="flex-1 py-2 border border-gray-300 rounded-lg text-sm">Hủy</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2 gradient-blue text-white rounded-lg text-sm font-medium disabled:opacity-50">
+            <button type="button" onClick={() => { setShowModal(false); setEditUser(null) }} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">
               {saving ? 'Đang lưu...' : editUser ? 'Cập nhật' : 'Thêm'}
             </button>
           </div>
@@ -239,16 +277,16 @@ export default function UsersPage() {
       <Modal isOpen={showTeamModal} onClose={() => setShowTeamModal(false)} title="Thêm team mới">
         <form onSubmit={handleTeamSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tên team *</label>
-            <input value={teamForm.name} onChange={e => setTeamForm({...teamForm, name: e.target.value})} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="VD: Team Khu vực Đà Nẵng" />
+            <label className="block text-sm font-medium text-surface-700 mb-1">Tên team *</label>
+            <input value={teamForm.name} onChange={e => setTeamForm({...teamForm, name: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder="VD: Team Khu vực Đà Nẵng" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-            <textarea value={teamForm.description} onChange={e => setTeamForm({...teamForm, description: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" rows={3} />
+            <label className="block text-sm font-medium text-surface-700 mb-1">Mô tả</label>
+            <textarea value={teamForm.description} onChange={e => setTeamForm({...teamForm, description: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" rows={3} />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowTeamModal(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-sm">Hủy</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2 gradient-blue text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang tạo...' : 'Tạo team'}</button>
+            <button type="button" onClick={() => setShowTeamModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang tạo...' : 'Tạo team'}</button>
           </div>
         </form>
       </Modal>

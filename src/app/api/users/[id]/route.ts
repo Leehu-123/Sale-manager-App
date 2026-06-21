@@ -76,3 +76,49 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user || session.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { id } = await params
+  if (session.user.id === id) {
+    return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
+  }
+
+  try {
+    // Check if user has relations that prevent deletion
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { customers: true, opportunities: true, quotes: true, orders: true }
+        }
+      }
+    })
+
+    if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    const totalRelations = user._count.customers + user._count.opportunities + user._count.quotes + user._count.orders
+    
+    if (totalRelations > 0) {
+      // Soft delete by setting status to INACTIVE if they have data
+      await prisma.user.update({
+        where: { id },
+        data: { status: 'INACTIVE' }
+      })
+      await createAuditLog(session.user.id, 'DEACTIVATE', 'user', id, { reason: 'Has related data' })
+      return NextResponse.json({ success: true, message: 'User deactivated because they have related data' })
+    } else {
+      // Hard delete if no data
+      await prisma.user.delete({ where: { id } })
+      await createAuditLog(session.user.id, 'DELETE', 'user', id)
+      return NextResponse.json({ success: true })
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}

@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
         projectName: data.projectName,
         source: data.source,
         status: data.status || 'NEW',
-        productNeeds: data.productNeeds || [],
+        productNeeds: data.productNeeds && data.productNeeds.length > 0 ? JSON.stringify(data.productNeeds) : null,
         estimatedArea: data.estimatedArea,
         estimatedBudget: data.estimatedBudget,
         notes: data.notes,

@@ -55,11 +55,11 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
       )}>
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-[#1e293b]">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200">
+            <h2 className="text-lg font-semibold text-surface-900">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors"
             >
               <X size={20} />
             </button>
@@ -73,7 +73,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-200 bg-surface-50 rounded-b-xl">
             {footer}
           </div>
         )}
@@ -82,7 +82,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
         {!title && (
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="absolute top-3 right-3 p-1.5 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors"
           >
             <X size={20} />
           </button>

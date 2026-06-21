@@ -32,8 +32,8 @@ export function Pagination({ page, totalPages, totalItems, onPageChange }: Pagin
   return (
     <div className="flex items-center justify-between">
       {totalItems !== undefined && (
-        <p className="text-sm text-gray-500">
-          Tổng: <span className="font-medium text-gray-700">{totalItems}</span> mục
+        <p className="text-sm text-surface-500">
+          Tổng: <span className="font-medium text-surface-700">{totalItems}</span> mục
         </p>
       )}
       <div className="flex items-center gap-1 ml-auto">
@@ -43,8 +43,8 @@ export function Pagination({ page, totalPages, totalItems, onPageChange }: Pagin
           className={cn(
             'p-1.5 rounded-lg text-sm transition-colors',
             page <= 1
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-surface-300 cursor-not-allowed'
+              : 'text-surface-600 hover:bg-surface-100'
           )}
         >
           <ChevronLeft size={18} />
@@ -52,7 +52,7 @@ export function Pagination({ page, totalPages, totalItems, onPageChange }: Pagin
 
         {getPages().map((p, i) =>
           p === '...' ? (
-            <span key={`dots-${i}`} className="px-2 text-gray-400 text-sm">…</span>
+            <span key={`dots-${i}`} className="px-2 text-surface-400 text-sm">…</span>
           ) : (
             <button
               key={p}
@@ -60,8 +60,8 @@ export function Pagination({ page, totalPages, totalItems, onPageChange }: Pagin
               className={cn(
                 'min-w-[32px] h-8 rounded-lg text-sm font-medium transition-colors',
                 p === page
-                  ? 'bg-[#1e3a5f] text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-brand-700 text-white shadow-sm'
+                  : 'text-surface-600 hover:bg-surface-100'
               )}
             >
               {p}
@@ -75,8 +75,8 @@ export function Pagination({ page, totalPages, totalItems, onPageChange }: Pagin
           className={cn(
             'p-1.5 rounded-lg text-sm transition-colors',
             page >= totalPages
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'text-surface-300 cursor-not-allowed'
+              : 'text-surface-600 hover:bg-surface-100'
           )}
         >
           <ChevronRight size={18} />

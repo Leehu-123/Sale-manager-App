@@ -14,15 +14,29 @@ export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState('revenue')
   const [data, setData] = useState<ReportData>(null)
   const [loading, setLoading] = useState(true)
+  const [userIdFilter, setUserIdFilter] = useState('')
+  const [monthFilter, setMonthFilter] = useState('')
+  const [users, setUsers] = useState<Array<{ id: string; name: string }>>([])
+
+  useEffect(() => {
+    fetch('/api/users').then(r => r.json()).then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
+  }, [])
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/reports?type=${activeReport}`)
+    const params = new URLSearchParams({ type: activeReport })
+    if (userIdFilter) params.set('userId', userIdFilter)
+    if (monthFilter) {
+      const [year, month] = monthFilter.split('-')
+      params.set('startDate', `${year}-${month}-01`)
+      params.set('endDate', new Date(Number(year), Number(month), 0).toISOString().split('T')[0])
+    }
+    fetch(`/api/reports?${params}`)
       .then(r => r.json())
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [activeReport])
+  }, [activeReport, userIdFilter, monthFilter])
 
   const reportTabs = [
     { key: 'revenue', label: 'Doanh thu' },
@@ -35,14 +49,25 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#1e293b]">Báo cáo & Thống kê</h1>
-        <p className="text-gray-500 text-sm mt-1">Phân tích hiệu suất kinh doanh</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-surface-900">Báo cáo & Thống kê</h1>
+          <p className="text-surface-500 text-sm mt-1">Phân tích hiệu suất kinh doanh</p>
+        </div>
+        <div className="flex gap-3">
+          {session?.user?.role !== 'SALES' && (
+            <select value={userIdFilter} onChange={e => setUserIdFilter(e.target.value)} className="border border-surface-300 rounded-lg px-3 py-2 text-sm bg-white min-w-[150px]">
+              <option value="">Tất cả nhân viên</option>
+              {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          )}
+          <input type="month" value={monthFilter} onChange={e => setMonthFilter(e.target.value)} className="border border-surface-300 rounded-lg px-3 py-2 text-sm bg-white" />
+        </div>
       </div>
 
       <div className="flex gap-2 overflow-x-auto">
         {reportTabs.map(tab => (
-          <button key={tab.key} onClick={() => setActiveReport(tab.key)} className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeReport === tab.key ? 'bg-[#1e3a5f] text-white' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'}`}>
+          <button key={tab.key} onClick={() => setActiveReport(tab.key)} className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeReport === tab.key ? 'bg-brand-700 text-white' : 'bg-white text-surface-600 hover:bg-surface-50 shadow-sm'}`}>
             {tab.label}
           </button>
         ))}
@@ -52,13 +77,13 @@ export default function ReportsPage() {
         {loading ? (
           <div className="flex items-center justify-center h-[400px]"><div className="spinner" /></div>
         ) : !data ? (
-          <div className="text-center py-12 text-gray-400">Không có dữ liệu</div>
+          <div className="text-center py-12 text-surface-400">Không có dữ liệu</div>
         ) : (
           <>
             {activeReport === 'revenue' && (
               <div>
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-4 text-white">
+                  <div className="bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl p-4 text-white">
                     <p className="text-sm text-white/70">Tổng doanh thu</p>
                     <p className="text-2xl font-bold mt-1">{formatCurrency((data as { total: number }).total || 0)}</p>
                   </div>

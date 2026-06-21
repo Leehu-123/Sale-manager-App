@@ -14,7 +14,7 @@ export const customerSchema = z.object({
   address: z.string().optional().nullable(),
   province: z.string().optional().nullable(),
   projectName: z.string().optional().nullable(),
-  source: z.enum(['WEBSITE', 'FACEBOOK', 'ZALO', 'GOOGLE_ADS', 'REFERRAL', 'RETURNING', 'TELESALES', 'SHOWROOM', 'OTHER']),
+  source: z.enum(['WEBSITE', 'FACEBOOK', 'ZALO', 'GOOGLE_ADS', 'REFERRAL', 'RETURNING', 'TELESALES', 'SHOWROOM', 'FIELD_MARKETING', 'OTHER']),
   status: z.enum(['NEW', 'CONTACTED', 'CONSULTING', 'QUOTE_SENT', 'NEGOTIATING', 'PURCHASED', 'NO_NEED', 'UNREACHABLE', 'FOLLOW_UP']).optional(),
   productNeeds: z.array(z.string()).optional(),
   estimatedArea: z.number().optional().nullable(),

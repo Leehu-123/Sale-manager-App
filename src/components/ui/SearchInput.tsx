@@ -42,18 +42,18 @@ export function SearchInput({
 
   return (
     <div className={`relative ${className}`}>
-      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
       <input
         type="text"
         placeholder={placeholder}
         value={internalValue}
         onChange={(e) => handleChange(e.target.value)}
-        className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-lg bg-white placeholder-gray-400 transition-colors hover:border-gray-400"
+        className="w-full pl-9 pr-8 py-2 text-sm border border-surface-300 rounded-lg bg-white placeholder-surface-400 transition-colors hover:border-surface-400"
       />
       {internalValue && (
         <button
           onClick={handleClear}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-gray-600"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-surface-400 hover:text-surface-600"
         >
           <X size={14} />
         </button>

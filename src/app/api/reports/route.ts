@@ -17,8 +17,9 @@ export async function GET(req: NextRequest) {
   const start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth() - 5, 1)
   const end = endDate ? new Date(endDate) : new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-  const ownerFilter = role === 'SALES' ? { assignedToId: userId } : {}
-  const creatorFilter = role === 'SALES' ? { createdById: userId } : {}
+  const specificUserId = searchParams.get('userId')
+  const ownerFilter = role === 'SALES' ? { assignedToId: userId } : (specificUserId ? { assignedToId: specificUserId } : {})
+  const creatorFilter = role === 'SALES' ? { createdById: userId } : (specificUserId ? { createdById: specificUserId } : {})
 
   try {
     switch (type) {
