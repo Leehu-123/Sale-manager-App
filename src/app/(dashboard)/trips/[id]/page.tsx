@@ -14,7 +14,11 @@ interface TripDailyReport {
 
 interface TripDetail {
   id: string; code: string; title: string; destination: string; purpose?: string
-  startDate: string; endDate: string; status: string; estimatedCost: number; actualCost: number
+  startDate: string; endDate: string; status: string; 
+  estimatedCost: number; estimatedTransportCost: number; estimatedFoodCost: number;
+  estimatedAccommodationCost: number; estimatedEntertainmentCost: number; entertainmentNotes?: string;
+  actualCost: number; actualTransportCost: number; actualFoodCost: number;
+  actualAccommodationCost: number; actualEntertainmentCost: number;
   notes?: string; summary?: string; totalNewClients: number; totalOldClients: number
   userId: string; user: { name: string; email: string }
   reports: TripDailyReport[]
@@ -53,7 +57,9 @@ export default function TripDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Finish Form state
-  const [finishForm, setFinishForm] = useState({ actualCost: '', summary: '' })
+  const [finishForm, setFinishForm] = useState({ 
+    actualTransportCost: '', actualFoodCost: '', actualAccommodationCost: '', actualEntertainmentCost: '', summary: '' 
+  })
 
   const fetchTrip = async () => {
     try {
@@ -147,12 +153,22 @@ export default function TripDetailPage() {
       const totalNew = trip?.reports.reduce((s, r) => s + r.newClients, 0) || 0
       const totalOld = trip?.reports.reduce((s, r) => s + r.oldClients, 0) || 0
 
+      const transport = parseFloat(finishForm.actualTransportCost) || 0
+      const food = parseFloat(finishForm.actualFoodCost) || 0
+      const accom = parseFloat(finishForm.actualAccommodationCost) || 0
+      const enter = parseFloat(finishForm.actualEntertainmentCost) || 0
+      const totalCost = transport + food + accom + enter
+
       const res = await fetch(`/api/trips/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: 'COMPLETED',
-          actualCost: parseFloat(finishForm.actualCost) || 0,
+          actualTransportCost: transport,
+          actualFoodCost: food,
+          actualAccommodationCost: accom,
+          actualEntertainmentCost: enter,
+          actualCost: totalCost,
           summary: finishForm.summary,
           totalNewClients: totalNew,
           totalOldClients: totalOld,
@@ -214,10 +230,33 @@ export default function TripDetailPage() {
           <div><p className="text-sm text-surface-500 mb-1">Điểm đến</p><p className="font-medium flex items-center gap-1"><MapPin size={16} className="text-brand-500"/> {trip.destination}</p></div>
           <div><p className="text-sm text-surface-500 mb-1">Thời gian</p><p className="font-medium flex items-center gap-1"><Calendar size={16} className="text-brand-500"/> {formatDate(trip.startDate)} - {formatDate(trip.endDate)}</p></div>
           <div><p className="text-sm text-surface-500 mb-1">Mục đích</p><p className="text-sm">{trip.purpose || '-'}</p></div>
+          <div>
+            <p className="text-sm text-surface-500 mb-2">Chi tiết dự toán (Tổng: {formatCurrency(trip.estimatedCost)})</p>
+            <div className="text-xs space-y-1 bg-surface-50 p-3 rounded-lg border border-surface-100">
+              <div className="flex justify-between"><span>Xăng xe:</span><span className="font-medium">{formatCurrency(trip.estimatedTransportCost)}</span></div>
+              <div className="flex justify-between"><span>Ăn uống:</span><span className="font-medium">{formatCurrency(trip.estimatedFoodCost)}</span></div>
+              <div className="flex justify-between"><span>Phòng nghỉ:</span><span className="font-medium">{formatCurrency(trip.estimatedAccommodationCost)}</span></div>
+              <div className="flex justify-between">
+                <span>Tiếp khách: {trip.entertainmentNotes && <span className="text-surface-400">({trip.entertainmentNotes})</span>}</span>
+                <span className="font-medium">{formatCurrency(trip.estimatedEntertainmentCost)}</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="space-y-4">
-          <div><p className="text-sm text-surface-500 mb-1">Chi phí dự kiến</p><p className="font-semibold text-amber-600 flex items-center gap-1"><DollarSign size={16}/> {formatCurrency(trip.estimatedCost)}</p></div>
-          <div><p className="text-sm text-surface-500 mb-1">Chi phí thực tế</p><p className="font-semibold text-green-600 flex items-center gap-1"><DollarSign size={16}/> {trip.actualCost ? formatCurrency(trip.actualCost) : 'Chưa chốt'}</p></div>
+          <div>
+            <p className="text-sm text-surface-500 mb-2">Chi phí thực tế (Tổng: {trip.actualCost ? formatCurrency(trip.actualCost) : 'Chưa chốt'})</p>
+            {trip.status === 'COMPLETED' ? (
+              <div className="text-xs space-y-1 bg-green-50 p-3 rounded-lg border border-green-100 text-green-800">
+                <div className="flex justify-between"><span>Xăng xe:</span><span className="font-medium">{formatCurrency(trip.actualTransportCost)}</span></div>
+                <div className="flex justify-between"><span>Ăn uống:</span><span className="font-medium">{formatCurrency(trip.actualFoodCost)}</span></div>
+                <div className="flex justify-between"><span>Phòng nghỉ:</span><span className="font-medium">{formatCurrency(trip.actualAccommodationCost)}</span></div>
+                <div className="flex justify-between"><span>Tiếp khách:</span><span className="font-medium">{formatCurrency(trip.actualEntertainmentCost)}</span></div>
+              </div>
+            ) : (
+              <p className="text-xs text-surface-400 italic">Chi phí thực tế sẽ được cập nhật khi kết thúc chuyến đi.</p>
+            )}
+          </div>
           <div><p className="text-sm text-surface-500 mb-1">Tổng kết</p><p className="text-sm">{trip.summary || '-'}</p></div>
           {trip.status === 'COMPLETED' && (
             <div className="flex gap-4">
@@ -326,7 +365,14 @@ export default function TripDetailPage() {
           <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
             Hệ thống sẽ tổng hợp số liệu từ các báo cáo ngày. Bạn vui lòng chốt chi phí thực tế và đánh giá tổng kết chuyến đi.
           </div>
-          <div><label className="block text-sm font-medium text-surface-700 mb-1">Chi phí thực tế (VNĐ) *</label><input type="number" min="0" required value={finishForm.actualCost} onChange={e => setFinishForm({...finishForm, actualCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedCost.toString()} /></div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP xăng xe thực tế</label><input type="number" min="0" value={finishForm.actualTransportCost} onChange={e => setFinishForm({...finishForm, actualTransportCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedTransportCost.toString()} /></div>
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP ăn uống thực tế</label><input type="number" min="0" value={finishForm.actualFoodCost} onChange={e => setFinishForm({...finishForm, actualFoodCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedFoodCost.toString()} /></div>
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP phòng nghỉ thực tế</label><input type="number" min="0" value={finishForm.actualAccommodationCost} onChange={e => setFinishForm({...finishForm, actualAccommodationCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedAccommodationCost.toString()} /></div>
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP tiếp khách thực tế</label><input type="number" min="0" value={finishForm.actualEntertainmentCost} onChange={e => setFinishForm({...finishForm, actualEntertainmentCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedEntertainmentCost.toString()} /></div>
+          </div>
+
           <div><label className="block text-sm font-medium text-surface-700 mb-1">Đánh giá chung</label><textarea value={finishForm.summary} onChange={e => setFinishForm({...finishForm, summary: e.target.value})} rows={4} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder="Đánh giá hiệu quả so với mục tiêu đề ra..." /></div>
           <div className="flex gap-3 pt-4 border-t border-surface-100">
             <button type="button" onClick={() => setShowFinishModal(false)} className="flex-1 px-4 py-2 bg-surface-100 text-surface-700 rounded-lg font-medium hover:bg-surface-200">Hủy</button>

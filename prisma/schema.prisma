@@ -432,11 +432,20 @@ model BusinessTrip {
   title           String
   destination     String
   purpose         String?
-  startDate       DateTime
-  endDate         DateTime
-  estimatedCost   Float    @default(0)
-  actualCost      Float    @default(0)
-  status          String   @default("PROPOSED") // PROPOSED, APPROVED, REJECTED, IN_PROGRESS, COMPLETED
+  startDate                  DateTime
+  endDate                    DateTime
+  estimatedCost              Float    @default(0)
+  estimatedTransportCost     Float    @default(0)
+  estimatedFoodCost          Float    @default(0)
+  estimatedAccommodationCost Float    @default(0)
+  estimatedEntertainmentCost Float    @default(0)
+  entertainmentNotes         String?
+  actualCost                 Float    @default(0)
+  actualTransportCost        Float    @default(0)
+  actualFoodCost             Float    @default(0)
+  actualAccommodationCost    Float    @default(0)
+  actualEntertainmentCost    Float    @default(0)
+  status                     String   @default("PROPOSED") // PROPOSED, APPROVED, REJECTED, IN_PROGRESS, COMPLETED
   notes           String?
   summary         String?
   totalNewClients Int      @default(0)

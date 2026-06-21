@@ -50,6 +50,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       data: {
         status: body.status !== undefined ? body.status : existing.status,
         actualCost: body.actualCost !== undefined ? body.actualCost : existing.actualCost,
+        actualTransportCost: body.actualTransportCost !== undefined ? body.actualTransportCost : existing.actualTransportCost,
+        actualFoodCost: body.actualFoodCost !== undefined ? body.actualFoodCost : existing.actualFoodCost,
+        actualAccommodationCost: body.actualAccommodationCost !== undefined ? body.actualAccommodationCost : existing.actualAccommodationCost,
+        actualEntertainmentCost: body.actualEntertainmentCost !== undefined ? body.actualEntertainmentCost : existing.actualEntertainmentCost,
         summary: body.summary !== undefined ? body.summary : existing.summary,
         totalNewClients: body.totalNewClients !== undefined ? body.totalNewClients : existing.totalNewClients,
         totalOldClients: body.totalOldClients !== undefined ? body.totalOldClients : existing.totalOldClients,
