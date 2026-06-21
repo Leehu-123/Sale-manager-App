@@ -12,7 +12,7 @@ echo Đang khởi động Server Next.js...
 echo Vui lòng đợi trong giây lát... Hệ thống sẽ tự động mở trang web.
 echo ----------------------------------------------
 
-start http://localhost:3000
+start http://localhost:3002
 npm run dev
 
 pause
