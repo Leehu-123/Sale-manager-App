@@ -89,7 +89,7 @@ export function Topbar() {
 
       {/* Mobile left side */}
       <div className="flex items-center gap-3 lg:hidden">
-        <button className="p-2 rounded-lg hover:bg-surface-200 transition-colors duration-200">
+        <button onClick={() => window.dispatchEvent(new Event('toggle-mobile-sidebar'))} className="p-2 rounded-lg hover:bg-surface-200 transition-colors duration-200">
           <Menu className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">

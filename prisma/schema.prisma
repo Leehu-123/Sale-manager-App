@@ -103,6 +103,7 @@ model User {
   interactions         CustomerInteraction[]
   orderPaymentsCreated OrderPayment[]
   auditLogs            AuditLog[]
+  trips                BusinessTrip[]
 }
 
 // Customer / lead in the CRM
@@ -421,5 +422,53 @@ model AuditLog {
   @@index([entity])
   @@index([entityId])
   @@index([userId])
+}
+
+// Business Trip (Công tác)
+model BusinessTrip {
+  id              String   @id @default(cuid())
+  code            String   @unique // CT-XXXXXX
+  userId          String
+  title           String
+  destination     String
+  purpose         String?
+  startDate       DateTime
+  endDate         DateTime
+  estimatedCost   Float    @default(0)
+  actualCost      Float    @default(0)
+  status          String   @default("PROPOSED") // PROPOSED, APPROVED, REJECTED, IN_PROGRESS, COMPLETED
+  notes           String?
+  summary         String?
+  totalNewClients Int      @default(0)
+  totalOldClients Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports TripDailyReport[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Daily Report for Business Trip
+model TripDailyReport {
+  id              String   @id @default(cuid())
+  tripId          String
+  date            DateTime
+  location        String?  // GPS Coordinates or Link
+  content         String
+  results         String?
+  newClients      Int      @default(0)
+  oldClients      Int      @default(0)
+  images          String?  // JSON string array of URLs
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  trip BusinessTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
 }
 
