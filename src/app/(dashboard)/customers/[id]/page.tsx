@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Phone, Mail, MapPin, Building2, Calendar, Plus, Send } from 'lucide-react'
 import { formatDate, formatDateTime, formatCurrency, CUSTOMER_STATUS_LABELS, CUSTOMER_STATUS_COLORS, CUSTOMER_TYPE_LABELS, CUSTOMER_SOURCE_LABELS, INTERACTION_TYPE_LABELS, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, QUOTE_STATUS_LABELS, ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, TASK_STATUS_LABELS, TASK_PRIORITY_LABELS, TASK_PRIORITY_COLORS } from '@/lib/utils'
@@ -31,9 +32,8 @@ export default function CustomerDetailPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/customers/${params.id}`)
-      .then(r => r.json())
-      .then(setCustomer)
+    apiClient.get(`/customers/${params.id}`)
+      .then(res => setCustomer(res.data))
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [params.id])
@@ -42,19 +42,13 @@ export default function CustomerDetailPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch(`/api/customers/${params.id}/interactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...interactionForm, customerId: params.id }),
-      })
-      if (res.ok) {
-        setShowInteractionModal(false)
-        setInteractionForm({ type: 'CALL', content: '', result: '', nextFollowUpDate: '' })
-        // Refresh data
-        const data = await fetch(`/api/customers/${params.id}`).then(r => r.json())
-        setCustomer(data)
-      }
-    } catch { alert('Có lỗi xảy ra') }
+      await apiClient.post(`/customers/${params.id}/interactions`, { ...interactionForm, customerId: params.id })
+      setShowInteractionModal(false)
+      setInteractionForm({ type: 'CALL', content: '', result: '', nextFollowUpDate: '' })
+      // Refresh data
+      const data = await apiClient.get(`/customers/${params.id}`)
+      setCustomer(data.data)
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
 

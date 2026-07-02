@@ -1,7 +1,5 @@
 import NextAuth, { type NextAuthOptions, type DefaultSession } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
-import { prisma } from '@/lib/prisma'
 
 declare module 'next-auth' {
   interface Session {
@@ -9,6 +7,8 @@ declare module 'next-auth' {
       id: string
       role: string
       teamId: string | null
+      companyId: string
+      accessToken: string
     } & DefaultSession['user']
   }
 
@@ -16,6 +16,10 @@ declare module 'next-auth' {
     id: string
     role: string
     teamId: string | null
+    companyId: string
+    accessToken: string
+    name?: string | null
+    email?: string | null
   }
 }
 
@@ -24,6 +28,8 @@ declare module 'next-auth/jwt' {
     id: string
     role: string
     teamId: string | null
+    companyId: string
+    accessToken: string
   }
 }
 
@@ -40,33 +46,63 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Vui lòng nhập email và mật khẩu')
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'
+          const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            body: JSON.stringify({
+              identifier: credentials.email,
+              password: credentials.password,
+            }),
+            headers: { 'Content-Type': 'application/json' },
+          })
 
-        if (!user) {
-          throw new Error('Email hoặc mật khẩu không đúng')
-        }
+          const data = await res.json()
 
-        if (user.status !== 'ACTIVE') {
-          throw new Error('Tài khoản đã bị vô hiệu hóa')
-        }
+          if (!res.ok) {
+            throw new Error(data.message || 'Email hoặc mật khẩu không đúng')
+          }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
+          // Fetch user profile to get role/team
+          const profileRes = await fetch(`${API_URL}/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${data.data.accessToken}`
+            }
+          })
+          
+          if (!profileRes.ok) {
+            throw new Error('Không thể lấy thông tin người dùng')
+          }
+          
+          const profileData = await profileRes.json()
+          const userProfile = profileData.data
 
-        if (!isPasswordValid) {
-          throw new Error('Email hoặc mật khẩu không đúng')
-        }
+          const rawRole = Array.isArray(userProfile.roles)
+            ? userProfile.roles[0]
+            : userProfile.roles?.[0]?.name
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          teamId: user.teamId,
+          const roleMap: Record<string, string> = {
+            owner: 'ADMIN',
+            admin: 'ADMIN',
+            administrator: 'ADMIN',
+            manager: 'MANAGER',
+            sales: 'SALES',
+            user: 'SALES',
+          }
+
+          const normalizedRole = roleMap[String(rawRole || '').toLowerCase()] || 'SALES'
+
+          return {
+            id: userProfile.id,
+            email: userProfile.email,
+            name: userProfile.fullName,
+            role: normalizedRole,
+            teamId: userProfile.teamId || null,
+            companyId: userProfile.companyId,
+            accessToken: data.data.accessToken,
+          }
+        } catch (error: any) {
+          throw new Error(error.message || 'Đăng nhập thất bại')
         }
       },
     }),
@@ -77,14 +113,18 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.role = user.role
         token.teamId = user.teamId
+        token.companyId = user.companyId
+        token.accessToken = user.accessToken
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id
-        session.user.role = token.role
-        session.user.teamId = token.teamId
+        session.user.id = token.id as string
+        session.user.role = token.role as string
+        session.user.teamId = (token.teamId as string) || null
+        session.user.companyId = token.companyId as string
+        session.user.accessToken = token.accessToken as string
       }
       return session
     },

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save, MapPin } from 'lucide-react'
 
@@ -23,26 +24,19 @@ export default function CreateTripPage() {
       const enter = parseFloat(form.estimatedEntertainmentCost) || 0
       const totalCost = transport + food + accom + enter
 
-      const res = await fetch('/api/trips', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          estimatedTransportCost: transport,
-          estimatedFoodCost: food,
-          estimatedAccommodationCost: accom,
-          estimatedEntertainmentCost: enter,
-          estimatedCost: totalCost
-        })
+      const trip = await apiClient.post('/trips', {
+        ...form,
+        startDate: new Date(form.startDate).toISOString(),
+        endDate: new Date(form.endDate).toISOString(),
+        estimatedTransportCost: transport,
+        estimatedFoodCost: food,
+        estimatedAccommodationCost: accom,
+        estimatedEntertainmentCost: enter,
+        estimatedCost: totalCost
       })
-      if (res.ok) {
-        const trip = await res.json()
-        router.push(`/trips/${trip.id}`)
-      } else {
-        alert('Có lỗi xảy ra khi tạo đề xuất')
-      }
-    } catch {
-      alert('Có lỗi xảy ra')
+      router.push(`/trips/${trip.data.id}`)
+    } catch (err: any) {
+      alert(err.message || 'Có lỗi xảy ra')
     } finally {
       setSaving(false)
     }

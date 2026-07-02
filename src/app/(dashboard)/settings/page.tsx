@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useSession } from 'next-auth/react'
 import { Save, Shield, Building2, FileText } from 'lucide-react'
 
@@ -12,9 +13,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(setSettings)
+    apiClient.get('/settings')
+      .then(data => setSettings(data?.data || data || {}))
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
@@ -23,15 +23,9 @@ export default function SettingsPage() {
     setSaving(true)
     setSaved(false)
     try {
-      const res = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      })
-      if (res.ok) {
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
-      }
+      await apiClient.put('/settings', settings)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }

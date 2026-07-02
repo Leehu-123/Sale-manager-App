@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useSession } from 'next-auth/react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
 import { formatCurrency, OPPORTUNITY_STAGE_LABELS, CUSTOMER_SOURCE_LABELS } from '@/lib/utils'
@@ -19,7 +20,7 @@ export default function ReportsPage() {
   const [users, setUsers] = useState<Array<{ id: string; name: string }>>([])
 
   useEffect(() => {
-    fetch('/api/users').then(r => r.json()).then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
+    apiClient.get('/users').then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -31,9 +32,8 @@ export default function ReportsPage() {
       params.set('startDate', `${year}-${month}-01`)
       params.set('endDate', new Date(Number(year), Number(month), 0).toISOString().split('T')[0])
     }
-    fetch(`/api/reports?${params}`)
-      .then(r => r.json())
-      .then(setData)
+    apiClient.get(`/reports?${params}`)
+      .then(data => setData(data?.data || data || {}))
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [activeReport, userIdFilter, monthFilter])
@@ -98,7 +98,7 @@ export default function ReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `${(v / 1e6).toFixed(0)}M`} />
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                    <Tooltip formatter={(v: any) => formatCurrency(v as number)} />
                     <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Doanh thu" />
                     <Bar dataKey="paid" fill="#10b981" radius={[4, 4, 0, 0]} name="Đã thu" />
                   </BarChart>
@@ -121,10 +121,10 @@ export default function ReportsPage() {
                   </ResponsiveContainer>
                   <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
-                      <Pie data={((data as { data: Array<{ stage: string; value: number }> }).data || []).map(d => ({ ...d, name: OPPORTUNITY_STAGE_LABELS[d.stage] }))} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label={({ name, percent }: { name: string; percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                      <Pie data={((data as { data: Array<{ stage: string; value: number }> }).data || []).map(d => ({ ...d, name: OPPORTUNITY_STAGE_LABELS[d.stage] }))} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label={({ name, percent }: any) => `${name || ''}: ${((percent || 0) * 100).toFixed(0)}%`}>
                         {((data as { data: unknown[] }).data || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                      <Tooltip formatter={(v: any) => formatCurrency(v as number)} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -136,7 +136,7 @@ export default function ReportsPage() {
                 <h3 className="font-semibold mb-4">Nguồn khách hàng</h3>
                 <ResponsiveContainer width="100%" height={400}>
                   <PieChart>
-                    <Pie data={((data as { data: Array<{ source: string; count: number }> }).data || []).map(d => ({ ...d, name: CUSTOMER_SOURCE_LABELS[d.source] || d.source }))} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={150} label={({ name, count }: { name: string; count: number }) => `${name}: ${count}`}>
+                    <Pie data={((data as { data: Array<{ source: string; count: number }> }).data || []).map(d => ({ ...d, name: CUSTOMER_SOURCE_LABELS[d.source] || d.source }))} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={150} label={({ name, count }: any) => `${name || ''}: ${count || 0}`}>
                       {((data as { data: unknown[] }).data || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip />
@@ -153,7 +153,7 @@ export default function ReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={v => `${(v / 1e6).toFixed(0)}M`} />
                     <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={200} />
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                    <Tooltip formatter={(v: any) => formatCurrency(v as number)} />
                     <Bar dataKey="revenue" fill="#f59e0b" radius={[0, 4, 4, 0]} name="Doanh thu" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -191,7 +191,7 @@ export default function ReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `${(v / 1e6).toFixed(0)}M`} />
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                    <Tooltip formatter={(v: any) => formatCurrency(v as number)} />
                     <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Doanh thu" />
                   </BarChart>
                 </ResponsiveContainer>

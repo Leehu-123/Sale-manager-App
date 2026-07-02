@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { apiClient } from '@/lib/api-client'
 
 interface Product { id: string; name: string; referencePrice: number }
 interface Customer { id: string; name: string; code: string }
@@ -28,8 +29,8 @@ export default function CreateQuotePage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/customers?limit=200').then(r => r.json()),
-      fetch('/api/products?limit=100').then(r => r.json()),
+      apiClient.get('/customers?limit=200'),
+      apiClient.get('/products?limit=100'),
     ]).then(([c, p]) => {
       setCustomers(c.data || [])
       setProducts(p.data || [])
@@ -64,16 +65,9 @@ export default function CreateQuotePage() {
     if (!items.some(i => i.description)) { alert('Vui lòng thêm ít nhất 1 hạng mục'); return }
     setSaving(true)
     try {
-      const res = await fetch('/api/quotes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId, shippingCost, installationCost, vatRate, terms, notes, items }),
-      })
-      if (res.ok) {
-        const quote = await res.json()
-        router.push(`/quotes/${quote.id}`)
-      } else { const err = await res.json(); alert(err.error || 'Có lỗi xảy ra') }
-    } catch { alert('Có lỗi xảy ra') }
+      const quote = await apiClient.post('/quotes', { customerId, shippingCost, installationCost, vatRate, terms, notes, items })
+      router.push(`/quotes/${quote.data.id}`)
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
 

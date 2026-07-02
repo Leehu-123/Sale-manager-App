@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Plus, Search, LayoutGrid, List, ChevronRight } from 'lucide-react'
 import { formatCurrency, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
+import { apiClient } from '@/lib/api-client'
 
 interface Opportunity {
   id: string; code: string; name: string; stage: string; estimatedValue: number
@@ -41,8 +42,7 @@ export default function PipelinePage() {
     if (search) params.set('search', search)
     if (assignedToId) params.set('assignedToId', assignedToId)
     try {
-      const res = await fetch(`/api/opportunities?${params}`)
-      const data = await res.json()
+      const data = await apiClient.get(`/opportunities?${params}`)
       setOpportunities(data.data || [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -50,8 +50,8 @@ export default function PipelinePage() {
 
   useEffect(() => { fetchOpportunities() }, [fetchOpportunities])
   useEffect(() => {
-    fetch('/api/customers?limit=200').then(r => r.json()).then(d => setCustomers(d.data || [])).catch(() => {})
-    fetch('/api/users?limit=200').then(r => r.json()).then(d => setUsers(d || [])).catch(() => {})
+    apiClient.get('/customers?limit=200').then(d => setCustomers(d.data || [])).catch(() => {})
+    apiClient.get('/users?limit=200').then(d => setUsers(d.data || [])).catch(() => {})
   }, [])
 
   const handleStageChange = async (id: string, newStage: string) => {
@@ -62,11 +62,7 @@ export default function PipelinePage() {
     }
 
     try {
-      await fetch(`/api/opportunities/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: newStage }),
-      })
+      await apiClient.put(`/opportunities/${id}`, { stage: newStage })
       fetchOpportunities()
     } catch { alert('Có lỗi xảy ra') }
   }
@@ -74,11 +70,7 @@ export default function PipelinePage() {
   const handleLossSubmit = async () => {
     if (!pendingStageChange || !lossReason.trim()) return
     try {
-      await fetch(`/api/opportunities/${pendingStageChange.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: 'LOST', lossReason }),
-      })
+      await apiClient.put(`/opportunities/${pendingStageChange.id}`, { stage: 'LOST', lossReason })
       setShowLossModal(false)
       setLossReason('')
       setPendingStageChange(null)
@@ -90,20 +82,14 @@ export default function PipelinePage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch('/api/opportunities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          estimatedValue: parseFloat(form.estimatedValue) || 0,
-          probability: parseInt(form.probability) || 50,
-        }),
+      await apiClient.post('/opportunities', {
+        ...form,
+        estimatedValue: parseFloat(form.estimatedValue) || 0,
+        probability: parseInt(form.probability) || 50,
       })
-      if (res.ok) {
-        setShowAddModal(false)
-        setForm({ name: '', customerId: '', projectName: '', estimatedValue: '', probability: '50', products: [], notes: '' })
-        fetchOpportunities()
-      }
+      setShowAddModal(false)
+      setForm({ name: '', customerId: '', projectName: '', estimatedValue: '', probability: '50', products: [], notes: '' })
+      fetchOpportunities()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }

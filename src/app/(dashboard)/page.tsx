@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { formatCurrency, formatNumber, OPPORTUNITY_STAGE_LABELS } from '@/lib/utils'
+import { apiClient } from '@/lib/api-client'
 
 interface DashboardData {
   totalRevenue: number
@@ -37,9 +38,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/dashboard')
-      .then(res => res.json())
-      .then(setData)
+    apiClient.get('/dashboard')
+      .then(res => setData(res.data))
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
@@ -147,7 +147,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={(value: any) => formatCurrency(value as number)} />
               <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Doanh thu" />
               <Bar dataKey="paid" fill="#10b981" radius={[4, 4, 0, 0]} name="Đã thanh toán" />
             </BarChart>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis type="number" tick={{ fontSize: 12 }} />
               <YAxis dataKey="stageName" type="category" tick={{ fontSize: 11 }} width={120} />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={(value: any) => formatCurrency(value as number)} />
               <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="Giá trị" />
             </BarChart>
           </ResponsiveContainer>
@@ -183,13 +183,13 @@ export default function DashboardPage() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
                 >
                   {data?.topProducts?.map((_, index) => (
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={(value: any) => formatCurrency(value as number)} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -208,7 +208,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip formatter={(value: any) => formatCurrency(value as number)} />
                   <Bar dataKey="revenue" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Doanh thu" />
                 </BarChart>
               </ResponsiveContainer>

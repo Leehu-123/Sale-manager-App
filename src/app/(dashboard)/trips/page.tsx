@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
 import { Search, Map, Plus, ChevronRight } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -39,8 +40,7 @@ export default function TripsPage() {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
-      const res = await fetch(`/api/trips?${params}`)
-      const data = await res.json()
+      const data = await apiClient.get(`/trips?${params}`)
       setTrips(Array.isArray(data) ? data : [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }

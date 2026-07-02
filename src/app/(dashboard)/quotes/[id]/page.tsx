@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Save, Printer } from 'lucide-react'
 import { formatCurrency, QUOTE_STATUS_LABELS, PRODUCT_UNIT_LABELS } from '@/lib/utils'
+import { apiClient } from '@/lib/api-client'
 
 interface QuoteItem {
   id?: string; productId?: string; description: string; specification?: string
@@ -38,9 +39,10 @@ export default function QuoteDetailPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/quotes/${params.id}`).then(r => r.json()),
-      fetch('/api/products?limit=100').then(r => r.json()),
-    ]).then(([quoteData, productsData]) => {
+      apiClient.get(`/quotes/${params.id}`),
+      apiClient.get('/products?limit=100'),
+    ]).then(([quoteRes, productsData]) => {
+      const quoteData = quoteRes.data;
       setQuote(quoteData)
       setItems(quoteData.items || [])
       setShippingCost(quoteData.shippingCost || 0)
@@ -92,31 +94,20 @@ export default function QuoteDetailPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const res = await fetch(`/api/quotes/${params.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerId: quote?.customer.id,
-          shippingCost, installationCost, vatRate, terms, notes,
-          items: items.map((item, i) => ({ ...item, sortOrder: i })),
-        }),
+      const updated = await apiClient.put(`/quotes/${params.id}`, {
+        customerId: quote?.customer.id,
+        shippingCost, installationCost, vatRate, terms, notes,
+        items: items.map((item, i) => ({ ...item, sortOrder: i })),
       })
-      if (res.ok) {
-        const updated = await res.json()
-        setQuote({ ...quote!, ...updated })
-        alert('Đã lưu báo giá')
-      }
+      setQuote({ ...quote!, ...updated.data })
+      alert('Đã lưu báo giá')
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await fetch(`/api/quotes/${params.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, customerId: quote?.customer.id, items }),
-      })
+      await apiClient.put(`/quotes/${params.id}`, { status: newStatus, customerId: quote?.customer.id, items })
       setQuote(q => q ? { ...q, status: newStatus } : null)
     } catch { alert('Có lỗi xảy ra') }
   }
@@ -125,23 +116,13 @@ export default function QuoteDetailPage() {
     if (!confirm('Bạn có chắc muốn tạo đơn hàng từ báo giá này?')) return
     setSaving(true)
     try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          quoteId: quote?.id,
-          customerId: quote?.customer.id,
-          discount: 0,
-        })
+      const order = await apiClient.post('/orders', {
+        quoteId: quote?.id,
+        customerId: quote?.customer.id,
+        discount: 0,
       })
-      if (res.ok) {
-        const order = await res.json()
-        router.push(`/orders/${order.id}`)
-      } else {
-        const err = await res.json()
-        alert(err.error || 'Có lỗi xảy ra')
-      }
-    } catch { alert('Có lỗi xảy ra') }
+      router.push(`/orders/${order.data.id}`)
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
 

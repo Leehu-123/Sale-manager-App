@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useSession } from 'next-auth/react'
 import { Plus, Search, UserCog, Shield, Users as UsersIcon, Trash2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
@@ -14,6 +15,48 @@ interface User {
 }
 
 interface Team { id: string; name: string; _count: { users: number } }
+
+type ApiUser = Partial<User> & {
+  fullName?: string
+  roles?: string[]
+  isActive?: boolean
+  deletedAt?: string | null
+  _count?: Partial<User['_count']>
+}
+
+type ApiTeam = Partial<Team> & {
+  _count?: Partial<Team['_count']>
+}
+
+const mapRole = (role?: string) => {
+  const normalized = role?.toLowerCase()
+  if (normalized === 'owner' || normalized === 'admin' || normalized === 'administrator') return 'ADMIN'
+  if (normalized === 'manager') return 'MANAGER'
+  return 'SALES'
+}
+
+const normalizeUser = (user: ApiUser): User => ({
+  id: user.id || '',
+  email: user.email || '',
+  name: user.name || user.fullName || user.email || '',
+  phone: user.phone || '',
+  role: mapRole(user.role || user.roles?.[0]),
+  status: user.status || (user.isActive === false || user.deletedAt ? 'INACTIVE' : 'ACTIVE'),
+  teamId: user.teamId,
+  team: user.team,
+  createdAt: user.createdAt || new Date().toISOString(),
+  _count: {
+    customers: user._count?.customers ?? 0,
+    opportunities: user._count?.opportunities ?? 0,
+    orders: user._count?.orders ?? 0,
+  },
+})
+
+const normalizeTeam = (team: ApiTeam): Team => ({
+  id: team.id || '',
+  name: team.name || '',
+  _count: { users: team._count?.users ?? 0 },
+})
 
 const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', MANAGER: 'Quản lý', SALES: 'Nhân viên' }
 const ROLE_COLORS: Record<string, string> = { ADMIN: 'bg-red-100 text-red-800', MANAGER: 'bg-purple-100 text-purple-800', SALES: 'bg-brand-100 text-blue-800' }
@@ -45,11 +88,13 @@ export default function UsersPage() {
       if (teamFilter) params.set('teamId', teamFilter)
 
       const [usersRes, teamsRes] = await Promise.all([
-        fetch(`/api/users?${params}`).then(r => r.json()),
-        fetch('/api/teams').then(r => r.json()),
+        apiClient.get(`/users?${params}`),
+        apiClient.get('/teams'),
       ])
-      setUsers(Array.isArray(usersRes) ? usersRes : [])
-      setTeams(Array.isArray(teamsRes) ? teamsRes : [])
+      const usersData = Array.isArray(usersRes) ? usersRes : (usersRes?.data ?? [])
+      const teamsData = Array.isArray(teamsRes) ? teamsRes : (teamsRes?.data ?? [])
+      setUsers(Array.isArray(usersData) ? usersData.map(normalizeUser) : [])
+      setTeams(Array.isArray(teamsData) ? teamsData.map(normalizeTeam) : [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -60,17 +105,15 @@ export default function UsersPage() {
     e.preventDefault()
     setSaving(true)
     const isEdit = !!editUser
-    const url = isEdit ? `/api/users/${editUser.id}` : '/api/users'
+    const url = isEdit ? `/users/${editUser.id}` : '/users'
     const method = isEdit ? 'PUT' : 'POST'
     try {
       const body = isEdit ? { name: form.name, phone: form.phone, role: form.role, teamId: form.teamId || null, status: form.status, ...(form.password ? { password: form.password } : {}) } : form
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      if (res.ok) {
-        setShowModal(false)
-        setEditUser(null)
-        setForm({ name: '', email: '', password: '123456', phone: '', role: 'SALES', teamId: '', status: 'ACTIVE' })
-        fetchData()
-      } else { const err = await res.json(); alert(err.error || 'Có lỗi xảy ra') }
+      await (method === 'POST' ? apiClient.post(url, body) : apiClient.put(url, body))
+      setShowModal(false)
+      setEditUser(null)
+      setForm({ name: '', email: '', password: '123456', phone: '', role: 'SALES', teamId: '', status: 'ACTIVE' })
+      fetchData()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
@@ -79,8 +122,8 @@ export default function UsersPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch('/api/teams', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(teamForm) })
-      if (res.ok) { setShowTeamModal(false); setTeamForm({ name: '', description: '' }); fetchData() }
+      await apiClient.post('/teams', teamForm)
+      setShowTeamModal(false); setTeamForm({ name: '', description: '' }); fetchData()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
@@ -89,23 +132,19 @@ export default function UsersPage() {
     e.stopPropagation()
     if (!confirm('Bạn có chắc muốn xóa team này?')) return
     try {
-      const res = await fetch(`/api/teams/${id}`, { method: 'DELETE' })
-      if (res.ok) fetchData()
-      else { const err = await res.json(); alert(err.error || err.message || 'Lỗi xóa team') }
-    } catch { alert('Có lỗi xảy ra') }
+      await apiClient.delete(`/teams/${id}`)
+      fetchData()
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
   }
 
   const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     if (!confirm('Bạn có chắc muốn xóa nhân viên này? Dữ liệu sẽ không thể khôi phục.')) return
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.message) alert(data.message) // Alert if soft deleted
-        fetchData()
-      } else { const err = await res.json(); alert(err.error || 'Lỗi xóa nhân viên') }
-    } catch { alert('Có lỗi xảy ra') }
+      const data = await apiClient.delete(`/users/${id}`)
+      if (data?.message) alert(data.message)
+      fetchData()
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
   }
 
   const handleEdit = (user: User) => {

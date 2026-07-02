@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, DollarSign } from 'lucide-react'
 import { formatCurrency, formatDate, ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/lib/utils'
@@ -28,7 +29,7 @@ export default function OrderDetailPage() {
 
   const fetchOrder = async () => {
     try {
-      const data = await fetch(`/api/orders/${params.id}`).then(r => r.json())
+      const data = await apiClient.get(`/orders/${params.id}`)
       setOrder(data)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -40,27 +41,17 @@ export default function OrderDetailPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch(`/api/orders/${params.id}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...paymentForm, amount: parseFloat(paymentForm.amount) || 0 }),
-      })
-      if (res.ok) {
-        setShowPaymentModal(false)
-        setPaymentForm({ amount: '', paymentDate: new Date().toISOString().split('T')[0], method: 'transfer', reference: '', notes: '' })
-        fetchOrder()
-      }
+      await apiClient.post(`/orders/${params.id}/payments`, { ...paymentForm, amount: parseFloat(paymentForm.amount) || 0 })
+      setShowPaymentModal(false)
+      setPaymentForm({ amount: '', paymentDate: new Date().toISOString().split('T')[0], method: 'transfer', reference: '', notes: '' })
+      fetchOrder()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await fetch(`/api/orders/${params.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      })
+      await apiClient.put(`/orders/${params.id}`, { status: newStatus })
       fetchOrder()
     } catch { alert('Có lỗi xảy ra') }
   }

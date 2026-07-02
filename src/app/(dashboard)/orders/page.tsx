@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
 import { Search, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatCurrency, formatDate, ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/lib/utils'
@@ -36,8 +37,7 @@ export default function OrdersPage() {
     if (statusFilter) params.set('status', statusFilter)
     if (paymentFilter) params.set('paymentStatus', paymentFilter)
     try {
-      const res = await fetch(`/api/orders?${params}`)
-      const data = await res.json()
+      const data = await apiClient.get(`/orders?${params}`)
       setOrders(data.data || [])
       setTotal(data.total || 0)
       setTotalPages(data.totalPages || 1)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ArrowLeft, MapPin, Calendar, DollarSign, Upload, CheckCircle, XCircle, Plus } from 'lucide-react'
@@ -63,9 +64,9 @@ export default function TripDetailPage() {
 
   const fetchTrip = async () => {
     try {
-      const res = await fetch(`/api/trips/${params.id}`)
+      const res = await apiClient.get(`/trips/${params.id}`)
       if (res.ok) {
-        setTrip(await res.json())
+        setTrip(res.data)
       }
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -75,11 +76,7 @@ export default function TripDetailPage() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await fetch(`/api/trips/${params.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      })
+      await apiClient.put(`/trips/${params.id}`, { status: newStatus })
       fetchTrip()
     } catch { alert('Lỗi cập nhật trạng thái') }
   }
@@ -107,7 +104,7 @@ export default function TripDetailPage() {
     const formData = new FormData()
     formData.append('file', file)
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const res = await apiClient.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       if (res.ok) {
         const data = await res.json()
         setImages(prev => [...prev, data.url])
@@ -120,16 +117,14 @@ export default function TripDetailPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch(`/api/trips/${params.id}/reports`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...reportForm,
-          location,
-          images,
-        })
+      const res = await apiClient.post(`/trips/${params.id}/reports`, {
+        ...reportForm,
+        newClients: parseInt(reportForm.newClients) || 0,
+        oldClients: parseInt(reportForm.oldClients) || 0,
+        location,
+        images,
       })
-      if (res.ok) {
+      if (res) {
         setShowReportModal(false)
         setReportForm({ date: new Date().toISOString().split('T')[0], content: '', results: '', newClients: '', oldClients: '' })
         setLocation('')
@@ -159,22 +154,18 @@ export default function TripDetailPage() {
       const enter = parseFloat(finishForm.actualEntertainmentCost) || 0
       const totalCost = transport + food + accom + enter
 
-      const res = await fetch(`/api/trips/${params.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'COMPLETED',
-          actualTransportCost: transport,
-          actualFoodCost: food,
-          actualAccommodationCost: accom,
-          actualEntertainmentCost: enter,
-          actualCost: totalCost,
-          summary: finishForm.summary,
-          totalNewClients: totalNew,
-          totalOldClients: totalOld,
-        })
+      const res = await apiClient.put(`/trips/${params.id}`, {
+        status: 'COMPLETED',
+        actualTransportCost: transport,
+        actualFoodCost: food,
+        actualAccommodationCost: accom,
+        actualEntertainmentCost: enter,
+        actualCost: totalCost,
+        summary: finishForm.summary,
+        totalNewClients: totalNew,
+        totalOldClients: totalOld,
       })
-      if (res.ok) {
+      if (res) {
         setShowFinishModal(false)
         fetchTrip()
       }

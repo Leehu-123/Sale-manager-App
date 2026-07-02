@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { apiClient } from '@/lib/api-client'
 import { Plus, CheckCircle, Clock, AlertTriangle, Search } from 'lucide-react'
 import { formatDate, TASK_TYPE_LABELS, TASK_PRIORITY_LABELS, TASK_PRIORITY_COLORS, TASK_STATUS_LABELS, TASK_STATUS_COLORS } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
@@ -40,8 +41,7 @@ export default function TasksPage() {
     if (priorityFilter) params.set('priority', priorityFilter)
     if (assignedToFilter) params.set('assignedToId', assignedToFilter)
     try {
-      const res = await fetch(`/api/tasks?${params}`)
-      const data = await res.json()
+      const data = await apiClient.get(`/tasks?${params}`)
       setTasks(data.data || [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -49,17 +49,13 @@ export default function TasksPage() {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
   useEffect(() => {
-    fetch('/api/customers?limit=200').then(r => r.json()).then(d => setCustomers(d.data || [])).catch(() => {})
-    fetch('/api/users').then(r => r.json()).then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
+    apiClient.get('/customers?limit=200').then(d => setCustomers(d.data || [])).catch(() => {})
+    apiClient.get('/users').then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
   }, [])
 
   const handleComplete = async (id: string) => {
     try {
-      await fetch(`/api/tasks/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'DONE' }),
-      })
+      await apiClient.put(`/tasks/${id}`, { status: 'DONE' })
       fetchTasks()
     } catch { alert('Có lỗi xảy ra') }
   }
@@ -68,16 +64,10 @@ export default function TasksPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, assignedToId: form.assignedToId || session?.user?.id }),
-      })
-      if (res.ok) {
-        setShowModal(false)
-        setForm({ title: '', customerId: '', type: 'CALL', dueDate: '', priority: 'MEDIUM', assignedToId: '', notes: '' })
-        fetchTasks()
-      }
+      await apiClient.post('/tasks', { ...form, customerId: form.customerId || undefined, assignedToId: form.assignedToId || session?.user?.id })
+      setShowModal(false)
+      setForm({ title: '', customerId: '', type: 'CALL', dueDate: '', priority: 'MEDIUM', assignedToId: '', notes: '' })
+      fetchTasks()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
