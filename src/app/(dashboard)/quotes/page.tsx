@@ -50,7 +50,7 @@ export default function QuotesPage() {
 
   useEffect(() => { fetchQuotes() }, [fetchQuotes])
   useEffect(() => {
-    apiClient.get('/users?limit=200').then(d => setUsers(d.data || [])).catch(() => {})
+    apiClient.get('/users?limit=100').then(d => setUsers(d.data || [])).catch(() => {})
   }, [])
 
   const handleClone = async (id: string, e: React.MouseEvent) => {

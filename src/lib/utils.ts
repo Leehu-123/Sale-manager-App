@@ -262,3 +262,13 @@ export const PAYMENT_STATUS_COLORS: Record<string, string> = {
   PARTIAL: 'bg-orange-100 text-orange-800',
   FULLY_PAID: 'bg-green-100 text-green-800',
 }
+
+export function extractArray(res: any): any[] {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  if (res.data && Array.isArray(res.data)) return res.data;
+  if (res.items && Array.isArray(res.items)) return res.items;
+  if (res.data && res.data.data && Array.isArray(res.data.data)) return res.data.data;
+  if (res.data && res.data.items && Array.isArray(res.data.items)) return res.data.items;
+  return [];
+}

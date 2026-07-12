@@ -108,7 +108,21 @@ export default function UsersPage() {
     const url = isEdit ? `/users/${editUser.id}` : '/users'
     const method = isEdit ? 'PUT' : 'POST'
     try {
-      const body = isEdit ? { name: form.name, phone: form.phone, role: form.role, teamId: form.teamId || null, status: form.status, ...(form.password ? { password: form.password } : {}) } : form
+      
+    // Map form fields to Core API DTO
+    const mappedRole = form.role === 'ADMIN' ? 'admin' : (form.role === 'MANAGER' ? 'manager' : 'sales')
+    const baseBody = {
+      fullName: form.name,
+      phone: form.phone,
+      roleNames: [mappedRole],
+      teamId: form.teamId || null,
+      isActive: form.status === 'ACTIVE'
+    }
+    
+    const body = isEdit 
+      ? { ...baseBody, ...(form.password ? { password: form.password } : {}) } 
+      : { ...baseBody, email: form.email, password: form.password }
+
       await (method === 'POST' ? apiClient.post(url, body) : apiClient.put(url, body))
       setShowModal(false)
       setEditUser(null)

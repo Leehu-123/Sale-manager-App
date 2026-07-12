@@ -6,12 +6,12 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { apiClient } from '@/lib/api-client'
 
-interface Product { id: string; name: string; referencePrice: number }
+interface Product { id: string; name: string; salePrice: number }
 interface Customer { id: string; name: string; code: string }
 interface QuoteItem {
-  productId?: string; description: string; specification?: string; thickness?: string
-  length?: number; width?: number; area?: number; quantity: number
-  unitPrice: number; discount: number; total: number
+  productId?: string; description: string; unit?: string; specification?: string; thickness?: string
+  width?: number; length?: number; area?: number; discount?: number;
+  quantity: number; unitPrice: number; total: number
 }
 
 export default function CreateQuotePage() {
@@ -25,15 +25,29 @@ export default function CreateQuotePage() {
   const [vatRate, setVatRate] = useState(10)
   const [terms, setTerms] = useState('')
   const [notes, setNotes] = useState('')
-  const [items, setItems] = useState<QuoteItem[]>([{ description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])
+  const [discount, setDiscount] = useState(0)
+  const [items, setItems] = useState<QuoteItem[]>([{ description: '', thickness: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])
+  const [discountRate, setDiscountRate] = useState(0)
 
   useEffect(() => {
+    const extractArray = (res: any) => {
+      if (!res) return [];
+      if (Array.isArray(res)) return res;
+      if (res.data && Array.isArray(res.data)) return res.data;
+      if (res.items && Array.isArray(res.items)) return res.items;
+      if (res.data && res.data.data && Array.isArray(res.data.data)) return res.data.data;
+      if (res.data && res.data.items && Array.isArray(res.data.items)) return res.data.items;
+      return [];
+    };
+
     Promise.all([
-      apiClient.get('/customers?limit=200'),
-      apiClient.get('/products?limit=100'),
+      apiClient.get('/customers?page=1&limit=100'),
+      apiClient.get('/products?page=1&limit=100'),
     ]).then(([c, p]) => {
-      setCustomers(c.data || [])
-      setProducts(p.data || [])
+      setCustomers(extractArray(c));
+      setProducts(extractArray(p));
+    }).catch(err => {
+      console.error('Fetch error:', err);
     })
   }, [])
 
@@ -42,20 +56,33 @@ export default function CreateQuotePage() {
     const item = { ...updated[index], [field]: value }
     if (field === 'productId' && value) {
       const product = products.find(p => p.id === value)
-      if (product) { item.description = product.name; item.unitPrice = product.referencePrice }
+      if (product) { item.description = product.name; item.unitPrice = product.salePrice }
     }
-    if (field === 'length' || field === 'width') {
-      const l = field === 'length' ? (value as number) : item.length || 0
-      const w = field === 'width' ? (value as number) : item.width || 0
-      if (l && w) item.area = Math.round(l * w * 100) / 100
-    }
-    const base = (item.area || item.quantity) * item.unitPrice
-    item.total = Math.round(base - (base * item.discount / 100))
+    
+    const w = item.width || 0
+    const l = item.length || 0
+    const q = item.quantity || 0
+    
+    const area = (w * l * q) / 1000000
+    item.area = area > 0 ? Math.round(area * 1000) / 1000 : 0
+    
+    const up = item.unitPrice || 0
+    const d = item.discount || 0
+    
+    const baseQuantity = item.area > 0 ? item.area : q;
+    item.total = Math.round(baseQuantity * (up - d))
+    
     updated[index] = item
     setItems(updated)
   }
 
-  const subtotal = items.reduce((s, i) => s + i.total, 0) + shippingCost + installationCost
+  const itemsTotal = items.reduce((s, i) => s + i.total, 0)
+  const totalArea = items.reduce((s, i) => s + (i.area || 0), 0)
+  const subtotalBeforeDiscount = itemsTotal + shippingCost + installationCost
+  
+  // Chiết khấu có thể nhập % hoặc số tiền. Để đơn giản, cho phép nhập trực tiếp số tiền, và hiển thị tỷ lệ %.
+  const discountAmount = discount
+  const subtotal = subtotalBeforeDiscount - discountAmount
   const vatAmount = Math.round(subtotal * vatRate / 100)
   const grandTotal = subtotal + vatAmount
 
@@ -65,7 +92,7 @@ export default function CreateQuotePage() {
     if (!items.some(i => i.description)) { alert('Vui lòng thêm ít nhất 1 hạng mục'); return }
     setSaving(true)
     try {
-      const quote = await apiClient.post('/quotes', { customerId, shippingCost, installationCost, vatRate, terms, notes, items })
+      const quote = await apiClient.post('/quotes', { customerId, shippingCost, installationCost, discount, vatRate, terms, notes, items })
       router.push(`/quotes/${quote.data.id}`)
     } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
     finally { setSaving(false) }
@@ -94,39 +121,44 @@ export default function CreateQuotePage() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-semibold">Hạng mục báo giá</h3>
-            <button type="button" onClick={() => setItems([...items, { description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])} className="flex items-center gap-1 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm">
+            <button type="button" onClick={() => setItems([...items, { description: '', thickness: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])} className="flex items-center gap-1 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm">
               <Plus size={14} /> Thêm dòng
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[1000px]">
               <thead className="bg-surface-50">
                 <tr>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-8">#</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500">Sản phẩm</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500">Mô tả</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">Dài</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">Rộng</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-20">m²</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-16">SL</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-28">Đơn giá</th>
-                  <th className="p-3 text-left text-xs font-medium text-surface-500 w-16">CK%</th>
-                  <th className="p-3 text-right text-xs font-medium text-surface-500 w-32">Thành tiền</th>
-                  <th className="p-3 w-10"></th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-8">#</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 min-w-[150px]">Sản phẩm</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Độ dày</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Rộng(mm)</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Dài(mm)</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">SL(Tấm)</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Tổng m2</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-24">Đơn giá</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-24">CK/m2</th>
+                  <th className="p-2 text-right text-xs font-medium text-surface-500 w-28">Thành tiền</th>
+                  <th className="p-2 w-8"></th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, i) => (
                   <tr key={i} className="border-t">
                     <td className="p-2 text-center text-surface-400">{i + 1}</td>
-                    <td className="p-2"><select value={item.productId || ''} onChange={e => updateItem(i, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs"><option value="">Chọn SP</option>{products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></td>
-                    <td className="p-2"><input value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" /></td>
-                    <td className="p-2"><input type="number" value={item.length || ''} onChange={e => updateItem(i, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" step="0.01" /></td>
-                    <td className="p-2"><input type="number" value={item.width || ''} onChange={e => updateItem(i, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" step="0.01" /></td>
-                    <td className="p-2"><input type="number" value={item.area || ''} onChange={e => updateItem(i, 'area', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50" readOnly={!!(item.length && item.width)} /></td>
+                    <td className="p-2">
+                      <select value={item.productId || ''} onChange={e => updateItem(i, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs mb-1">
+                        <option value="">Chọn SP</option>{products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                      <input placeholder="Ghi chú SP" value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" />
+                    </td>
+                    <td className="p-2"><input placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(i, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" /></td>
+                    <td className="p-2"><input type="number" placeholder="Rộng" value={item.width || ''} onChange={e => updateItem(i, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
+                    <td className="p-2"><input type="number" placeholder="Dài" value={item.length || ''} onChange={e => updateItem(i, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
                     <td className="p-2"><input type="number" value={item.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 1)} className="w-full border rounded px-2 py-1 text-xs" min="1" /></td>
+                    <td className="p-2"><input type="number" value={item.area || ''} disabled className="w-full border rounded px-2 py-1 text-xs bg-surface-50" /></td>
                     <td className="p-2"><input type="number" value={item.unitPrice} onChange={e => updateItem(i, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
-                    <td className="p-2"><input type="number" value={item.discount} onChange={e => updateItem(i, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" min="0" max="100" /></td>
+                    <td className="p-2"><input type="number" value={item.discount || ''} onChange={e => updateItem(i, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600" placeholder="CK" /></td>
                     <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
                     <td className="p-2">{items.length > 1 && <button type="button" onClick={() => setItems(items.filter((_, j) => j !== i))} className="p-1 hover:bg-red-50 rounded text-red-400"><Trash2 size={14} /></button>}</td>
                   </tr>
@@ -135,10 +167,17 @@ export default function CreateQuotePage() {
             </table>
           </div>
           <div className="p-4 border-t bg-surface-50">
-            <div className="max-w-sm ml-auto space-y-2 text-sm">
-              <div className="flex justify-between"><span>Tổng hạng mục:</span><span className="font-medium">{formatCurrency(items.reduce((s, i) => s + i.total, 0))}</span></div>
+            <div className="max-w-md ml-auto space-y-2 text-sm">
+              {totalArea > 0 && <div className="flex justify-between text-surface-500"><span>Tổng diện tích:</span><span>{totalArea.toFixed(3)} m2</span></div>}
+              <div className="flex justify-between"><span>Tổng hạng mục:</span><span className="font-medium">{formatCurrency(itemsTotal)}</span></div>
               <div className="flex justify-between items-center"><span>Vận chuyển:</span><input type="number" value={shippingCost} onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
               <div className="flex justify-between items-center"><span>Thi công:</span><input type="number" value={installationCost} onChange={e => setInstallationCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
+              <div className="flex justify-between items-center text-red-600">
+                <span className="flex items-center gap-2">Chiết khấu tổng: 
+                  <input type="number" placeholder="%" value={discountRate || ''} onChange={e => { const rate = parseFloat(e.target.value) || 0; setDiscountRate(rate); setDiscount(Math.round(subtotalBeforeDiscount * rate / 100)) }} className="w-16 border rounded px-2 py-1 text-xs text-right" /> %
+                </span>
+                <input type="number" value={discount} onChange={e => { setDiscount(parseFloat(e.target.value) || 0); setDiscountRate(0) }} className="w-32 border rounded px-2 py-1 text-xs text-right text-red-600" />
+              </div>
               <div className="flex justify-between border-t pt-2"><span>Trước VAT:</span><span className="font-semibold">{formatCurrency(subtotal)}</span></div>
               <div className="flex justify-between items-center"><span>VAT:</span><input type="number" value={vatRate} onChange={e => setVatRate(parseFloat(e.target.value) || 0)} className="w-16 border rounded px-2 py-1 text-xs text-right" /><span>% = {formatCurrency(vatAmount)}</span></div>
               <div className="flex justify-between font-bold text-base border-t pt-2 text-surface-900"><span>TỔNG:</span><span>{formatCurrency(grandTotal)}</span></div>
@@ -148,7 +187,7 @@ export default function CreateQuotePage() {
 
         <div className="flex gap-3 justify-end">
           <button type="button" onClick={() => router.push('/quotes')} className="px-6 py-2.5 border border-surface-300 rounded-lg text-sm">Hủy</button>
-          <button type="submit" disabled={saving} className="px-6 py-2.5 gradient-blue text-white rounded-lg text-sm font-medium disabled:opacity-50">
+          <button type="submit" disabled={saving} className="px-6 py-2.5 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">
             {saving ? 'Đang tạo...' : 'Tạo báo giá'}
           </button>
         </div>

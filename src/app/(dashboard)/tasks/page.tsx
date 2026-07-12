@@ -41,7 +41,7 @@ export default function TasksPage() {
     if (priorityFilter) params.set('priority', priorityFilter)
     if (assignedToFilter) params.set('assignedToId', assignedToFilter)
     try {
-      const data = await apiClient.get(`/tasks?${params}`)
+      const data = await apiClient.get(`/sales-tasks?${params}`)
       setTasks(data.data || [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -49,7 +49,7 @@ export default function TasksPage() {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
   useEffect(() => {
-    apiClient.get('/customers?limit=200').then(d => setCustomers(d.data || [])).catch(() => {})
+    apiClient.get('/customers?limit=100').then(d => setCustomers(d.data || [])).catch(() => {})
     apiClient.get('/users').then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
   }, [])
 
@@ -64,7 +64,7 @@ export default function TasksPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      await apiClient.post('/tasks', { ...form, customerId: form.customerId || undefined, assignedToId: form.assignedToId || session?.user?.id })
+      await apiClient.post('/sales-tasks', { ...form, customerId: form.customerId || undefined, assignedToId: form.assignedToId || session?.user?.id })
       setShowModal(false)
       setForm({ title: '', customerId: '', type: 'CALL', dueDate: '', priority: 'MEDIUM', assignedToId: '', notes: '' })
       fetchTasks()
@@ -165,8 +165,18 @@ export default function TasksPage() {
         )}
       </div>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Tạo công việc mới">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <Modal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)} 
+        title="Tạo công việc mới"
+        footer={
+          <>
+            <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
+            <button type="submit" form="task-form" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang tạo...' : 'Tạo task'}</button>
+          </>
+        }
+      >
+        <form id="task-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Tiêu đề *</label>
             <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
@@ -208,10 +218,6 @@ export default function TasksPage() {
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Ghi chú</label>
             <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" rows={3} />
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang tạo...' : 'Tạo task'}</button>
           </div>
         </form>
       </Modal>

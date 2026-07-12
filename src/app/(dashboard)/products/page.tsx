@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { Plus, Search, Package } from 'lucide-react'
-import { formatCurrency, PRODUCT_GROUP_LABELS, PRODUCT_UNIT_LABELS } from '@/lib/utils'
+import { formatCurrency, PRODUCT_GROUP_LABELS, PRODUCT_UNIT_LABELS, extractArray } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
 
 interface Product {
@@ -28,7 +28,7 @@ export default function ProductsPage() {
     if (groupFilter) params.set('group', groupFilter)
     try {
       const data = await apiClient.get(`/products?${params}`)
-      setProducts(data.data || [])
+      setProducts(extractArray(data))
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }, [search, groupFilter])

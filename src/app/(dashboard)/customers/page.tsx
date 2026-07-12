@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Search, Filter, Users, UserPlus, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   CUSTOMER_STATUS_LABELS, CUSTOMER_STATUS_COLORS, CUSTOMER_TYPE_LABELS,
-  CUSTOMER_SOURCE_LABELS, formatDate
+  CUSTOMER_SOURCE_LABELS, formatDate, extractArray
 } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
 import { apiClient } from '@/lib/api-client'
@@ -55,7 +55,7 @@ export default function CustomersPage() {
 
     try {
       const data = await apiClient.get(`/customers?${params}`)
-      setCustomers(data.data || [])
+      setCustomers(extractArray(data))
       setTotal(data.meta?.totalItems || 0)
       setTotalPages(data.meta?.totalPages || 1)
     } catch (err) { console.error(err) }
