@@ -24,7 +24,7 @@ export default function CreateTripPage() {
       const enter = parseFloat(form.estimatedEntertainmentCost) || 0
       const totalCost = transport + food + accom + enter
 
-      const trip = await apiClient.post('/trips', {
+      const trip = await apiClient.post('/business-trips', {
         ...form,
         startDate: new Date(form.startDate).toISOString(),
         endDate: new Date(form.endDate).toISOString(),

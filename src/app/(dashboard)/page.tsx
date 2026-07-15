@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import {
   TrendingUp, DollarSign, AlertCircle, UserPlus,
   Target, Briefcase, FileText, CheckCircle,
@@ -33,6 +34,7 @@ interface DashboardData {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#f97316', '#6366f1']
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { data: session } = useSession()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -61,13 +63,13 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { label: 'Doanh thu tháng này', value: formatCurrency(data?.totalRevenue || 0), icon: TrendingUp, gradient: 'bg-gradient-to-br from-brand-500 to-brand-700' },
-    { label: 'Đã thanh toán', value: formatCurrency(data?.paidRevenue || 0), icon: DollarSign, gradient: 'bg-gradient-to-br from-emerald-500 to-emerald-700' },
-    { label: 'Công nợ còn lại', value: formatCurrency(data?.unpaidRevenue || 0), icon: AlertCircle, gradient: 'bg-gradient-to-br from-red-500 to-red-700' },
-    { label: 'Khách hàng mới', value: formatNumber(data?.newCustomers || 0), icon: UserPlus, gradient: 'bg-gradient-to-br from-purple-500 to-purple-700' },
-    { label: 'Cơ hội đang xử lý', value: formatNumber(data?.activeOpportunities || 0), icon: Target, gradient: 'bg-gradient-to-br from-cyan-500 to-cyan-700' },
-    { label: 'Giá trị Pipeline', value: formatCurrency(data?.pipelineValue || 0), icon: Briefcase, gradient: 'bg-gradient-to-br from-brand-400 to-brand-600' },
-    { label: 'Báo giá đã gửi', value: formatNumber(data?.quoteSent || 0), icon: FileText, gradient: 'bg-gradient-to-br from-indigo-500 to-indigo-700' },
+    { label: 'Doanh thu tháng này', value: formatCurrency(data?.totalRevenue || 0), icon: TrendingUp, gradient: 'bg-gradient-to-br from-brand-500 to-brand-700', link: '/orders' },
+    { label: 'Đã thanh toán', value: formatCurrency(data?.paidRevenue || 0), icon: DollarSign, gradient: 'bg-gradient-to-br from-emerald-500 to-emerald-700', link: '/orders' },
+    { label: 'Công nợ còn lại', value: formatCurrency(data?.unpaidRevenue || 0), icon: AlertCircle, gradient: 'bg-gradient-to-br from-red-500 to-red-700', link: '/orders' },
+    { label: 'Khách hàng mới', value: formatNumber(data?.newCustomers || 0), icon: UserPlus, gradient: 'bg-gradient-to-br from-purple-500 to-purple-700', link: '/customers' },
+    { label: 'Cơ hội đang xử lý', value: formatNumber(data?.activeOpportunities || 0), icon: Target, gradient: 'bg-gradient-to-br from-cyan-500 to-cyan-700', link: '/pipeline' },
+    { label: 'Giá trị Pipeline', value: formatCurrency(data?.pipelineValue || 0), icon: Briefcase, gradient: 'bg-gradient-to-br from-brand-400 to-brand-600', link: '/pipeline' },
+    { label: 'Báo giá đã gửi', value: formatNumber(data?.quoteSent || 0), icon: FileText, gradient: 'bg-gradient-to-br from-indigo-500 to-indigo-700', link: '/quotes' },
     { label: 'Tỷ lệ chốt đơn', value: `${(data?.closeRate || 0).toFixed(1)}%`, icon: CheckCircle, gradient: 'bg-gradient-to-br from-emerald-400 to-emerald-600' },
   ]
 
@@ -90,7 +92,8 @@ export default function DashboardPage() {
         {stats.map((stat, index) => (
           <div
             key={stat.label}
-            className={`${stat.gradient} rounded-xl p-5 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 animate-fade-in`}
+            onClick={() => stat.link && router.push(stat.link)}
+            className={`${stat.gradient} rounded-xl p-5 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 animate-fade-in ${stat.link ? 'cursor-pointer' : ''}`}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-start justify-between">
@@ -108,7 +111,7 @@ export default function DashboardPage() {
 
       {/* Quick Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-orange-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div onClick={() => router.push('/tasks')} className="bg-white rounded-xl p-4 border border-orange-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer">
           <div className="p-3 bg-orange-100 rounded-lg">
             <Clock size={20} className="text-orange-600" />
           </div>
@@ -117,7 +120,7 @@ export default function DashboardPage() {
             <p className="text-sm text-surface-500">Task cần làm hôm nay</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-red-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div onClick={() => router.push('/tasks')} className="bg-white rounded-xl p-4 border border-red-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer">
           <div className="p-3 bg-red-100 rounded-lg">
             <AlertTriangle size={20} className="text-red-600" />
           </div>
@@ -126,7 +129,7 @@ export default function DashboardPage() {
             <p className="text-sm text-surface-500">Task quá hạn</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-brand-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div onClick={() => router.push('/customers')} className="bg-white rounded-xl p-4 border border-brand-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer">
           <div className="p-3 bg-brand-100 rounded-lg">
             <Phone size={20} className="text-brand-600" />
           </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { apiClient } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
 import { Search, Map, Plus, ChevronRight } from 'lucide-react'
@@ -32,19 +33,52 @@ const TRIP_STATUS_COLORS: Record<string, string> = {
 export default function TripsPage() {
   const router = useRouter()
   const [trips, setTrips] = useState<Trip[]>([])
+  const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
+  const [userIdFilter, setUserIdFilter] = useState('')
+
+  const { data: session } = useSession()
+
+  useEffect(() => {
+    const extractArray = (res: any) => {
+      if (!res) return [];
+      if (Array.isArray(res)) return res;
+      if (res.data && Array.isArray(res.data)) return res.data;
+      if (res.items && Array.isArray(res.items)) return res.items;
+      return [];
+    };
+    let url = '/users?limit=100'
+    if (session?.user?.role === 'SALE_LEAD' && session?.user?.teamId) {
+      url += `&teamId=${session.user.teamId}`
+    }
+    apiClient.get(url).then(d => setUsers(extractArray(d))).catch(() => {})
+  }, [session])
 
   const fetchTrips = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
-      const data = await apiClient.get(`/trips?${params}`)
-      setTrips(Array.isArray(data) ? data : [])
+      
+      const userRole = session?.user?.role
+      if (userRole === 'SALES') {
+        params.set('userId', session?.user?.id || '')
+      } else if (userRole === 'SALE_LEAD') {
+        if (userIdFilter) {
+          params.set('userId', userIdFilter)
+        } else {
+          params.set('teamId', session?.user?.teamId || '')
+        }
+      } else {
+        if (userIdFilter) params.set('userId', userIdFilter)
+      }
+
+      const data = await apiClient.get(`/business-trips?${params}`)
+      setTrips(Array.isArray(data) ? data : (data.data || []))
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
-  }, [statusFilter])
+  }, [statusFilter, userIdFilter, session])
 
   useEffect(() => { fetchTrips() }, [fetchTrips])
 
@@ -67,6 +101,10 @@ export default function TripsPage() {
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-surface-200 rounded-lg px-3 py-2 text-sm flex-1 sm:flex-none sm:w-48">
           <option value="">Tất cả trạng thái</option>
           {Object.entries(TRIP_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <select value={userIdFilter} onChange={e => setUserIdFilter(e.target.value)} className="border border-surface-200 rounded-lg px-3 py-2 text-sm flex-1 sm:flex-none sm:w-48">
+          <option value="">Tất cả nhân viên</option>
+          {users.map(u => <option key={u.id} value={u.id}>{u.fullName || u.name}</option>)}
         </select>
       </div>
 
@@ -96,13 +134,13 @@ export default function TripsPage() {
                       <p className="font-semibold text-surface-900">{trip.title}</p>
                       <p className="text-xs text-surface-500 flex items-center gap-1 mt-1"><Map size={12}/> {trip.destination}</p>
                     </td>
-                    <td className="p-4 font-medium text-surface-700">{trip.user.name}</td>
+                    <td className="p-4 font-medium text-surface-700">{trip.user?.name || 'Unknown'}</td>
                     <td className="p-4 text-xs text-surface-600">
                       {formatDate(trip.startDate)}<br/>
                       <span className="text-surface-400">đến</span> {formatDate(trip.endDate)}
                     </td>
                     <td className="p-4"><span className={`badge ${TRIP_STATUS_COLORS[trip.status]}`}>{TRIP_STATUS_LABELS[trip.status]}</span></td>
-                    <td className="p-4 text-center"><span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">{trip._count.reports}</span></td>
+                    <td className="p-4 text-center"><span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">{trip._count?.reports || 0}</span></td>
                   </tr>
                 ))
               )}

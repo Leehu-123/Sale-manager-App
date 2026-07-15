@@ -20,8 +20,15 @@ export default function ReportsPage() {
   const [users, setUsers] = useState<Array<{ id: string; name: string }>>([])
 
   useEffect(() => {
-    apiClient.get('/users').then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
-  }, [])
+    let url = '/users?limit=100'
+    if (session?.user?.role === 'SALE_LEAD' && session?.user?.teamId) {
+      url += `&teamId=${session.user.teamId}`
+    }
+    apiClient.get(url).then(d => {
+      const list = Array.isArray(d) ? d : (d?.data || []);
+      setUsers(list);
+    }).catch(() => {})
+  }, [session])
 
   useEffect(() => {
     setLoading(true)

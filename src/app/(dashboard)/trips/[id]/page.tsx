@@ -64,9 +64,10 @@ export default function TripDetailPage() {
 
   const fetchTrip = async () => {
     try {
-      const res = await apiClient.get(`/trips/${params.id}`)
-      if (res.ok) {
-        setTrip(res.data)
+      const res = await apiClient.get(`/business-trips/${params.id}`)
+      if (res) {
+        // If wrapped in {data: ...}, use res.data, else use res directly
+        setTrip(res.data || res)
       }
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -76,7 +77,17 @@ export default function TripDetailPage() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await apiClient.put(`/trips/${params.id}`, { status: newStatus })
+      let endpoint = '';
+      if (newStatus === 'APPROVED') endpoint = 'approve';
+      else if (newStatus === 'REJECTED') endpoint = 'reject';
+      else if (newStatus === 'IN_PROGRESS') endpoint = 'start';
+      else if (newStatus === 'COMPLETED') endpoint = 'complete';
+
+      if (endpoint) {
+        await apiClient.post(`/business-trips/${params.id}/${endpoint}`, {});
+      } else {
+        await apiClient.put(`/business-trips/${params.id}`, { status: newStatus });
+      }
       fetchTrip()
     } catch { alert('Lỗi cập nhật trạng thái') }
   }
@@ -104,25 +115,43 @@ export default function TripDetailPage() {
     const formData = new FormData()
     formData.append('file', file)
     try {
-      const res = await apiClient.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      // Get session token for auth
+      const sessionRes = await fetch('/api/auth/session')
+      const sessionData = await sessionRes.json().catch(() => ({}))
+      const headers: Record<string, string> = {}
+      if (sessionData?.user?.accessToken) {
+        headers['Authorization'] = `Bearer ${sessionData.user.accessToken}`
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      })
       if (res.ok) {
         const data = await res.json()
         setImages(prev => [...prev, data.url])
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        alert('Lỗi tải ảnh: ' + (errData.message || `HTTP ${res.status}`))
       }
-    } catch { alert('Lỗi tải ảnh') }
-    finally { setUploading(false) }
+    } catch (err: any) { alert('Lỗi tải ảnh: ' + (err.message || 'Không thể kết nối server')) }
+    finally {
+      setUploading(false)
+      // Reset input value after processing so the same file can be selected again
+      if (e.target) e.target.value = ''
+    }
   }
 
   const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await apiClient.post(`/trips/${params.id}/reports`, {
+      const res = await apiClient.post(`/business-trips/${params.id}/reports`, {
         ...reportForm,
         newClients: parseInt(reportForm.newClients) || 0,
         oldClients: parseInt(reportForm.oldClients) || 0,
         location,
-        images,
+        images: images.length > 0 ? JSON.stringify(images) : undefined,
       })
       if (res) {
         setShowReportModal(false)
@@ -154,7 +183,7 @@ export default function TripDetailPage() {
       const enter = parseFloat(finishForm.actualEntertainmentCost) || 0
       const totalCost = transport + food + accom + enter
 
-      const res = await apiClient.put(`/trips/${params.id}`, {
+      const res = await apiClient.put(`/business-trips/${params.id}`, {
         status: 'COMPLETED',
         actualTransportCost: transport,
         actualFoodCost: food,
@@ -177,7 +206,7 @@ export default function TripDetailPage() {
   if (!trip) return <div className="text-center py-12 text-surface-500">Không tìm thấy dữ liệu</div>
 
   const isOwner = session?.user?.id === trip.userId
-  const canApprove = userRole === 'ADMIN' || userRole === 'MANAGER'
+  const canApprove = ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD'].includes(userRole || '')
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -190,7 +219,7 @@ export default function TripDetailPage() {
               <h1 className="text-2xl font-bold text-surface-900">{trip.title}</h1>
               <span className={`badge ${TRIP_STATUS_COLORS[trip.status]}`}>{TRIP_STATUS_LABELS[trip.status]}</span>
             </div>
-            <p className="text-sm text-surface-500">Người đi: <span className="font-medium text-surface-700">{trip.user.name}</span> · Mã CT: {trip.code}</p>
+            <p className="text-sm text-surface-500">Người đi: <span className="font-medium text-surface-700">{trip.user?.name || 'Không xác định'}</span> · Mã CT: {trip.code}</p>
           </div>
         </div>
         
@@ -291,7 +320,7 @@ export default function TripDetailPage() {
                       {imagesArr.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                           {imagesArr.map((img: string, idx: number) => (
-                            <img key={idx} src={img} alt="Báo cáo" className="h-20 w-20 object-cover rounded-lg border border-surface-200" />
+                            <img key={idx} src={img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img} alt="Báo cáo" className="h-20 w-20 object-cover rounded-lg border border-surface-200" />
                           ))}
                         </div>
                       )}
@@ -333,15 +362,20 @@ export default function TripDetailPage() {
             <div className="flex flex-wrap gap-2">
               {images.map((img, idx) => (
                 <div key={idx} className="relative group">
-                  <img src={img} alt="preview" className="h-16 w-16 object-cover rounded-lg border border-surface-200" />
+                  <img src={img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img} alt="preview" className="h-16 w-16 object-cover rounded-lg border border-surface-200" />
                   <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><XCircle size={14}/></button>
                 </div>
               ))}
-              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="h-16 w-16 border-2 border-dashed border-surface-300 rounded-lg flex flex-col items-center justify-center text-surface-400 hover:border-brand-500 hover:text-brand-500 transition-colors bg-surface-50">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className={`h-16 w-16 border-2 border-dashed border-surface-300 rounded-lg flex flex-col items-center justify-center text-surface-400 hover:border-brand-500 hover:text-brand-500 transition-colors bg-surface-50 cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 {uploading ? <div className="spinner w-4 h-4 border-2" /> : <Plus size={20} />}
               </button>
+              <input ref={fileInputRef} type="file" onChange={handleImageUpload} accept="image/*" className="hidden" disabled={uploading} />
             </div>
-            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
           </div>
           <div className="flex gap-3 pt-4 border-t border-surface-100">
             <button type="button" onClick={() => setShowReportModal(false)} className="flex-1 px-4 py-2 bg-surface-100 text-surface-700 rounded-lg font-medium hover:bg-surface-200">Hủy</button>
@@ -358,10 +392,10 @@ export default function TripDetailPage() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP xăng xe thực tế</label><input type="number" min="0" value={finishForm.actualTransportCost} onChange={e => setFinishForm({...finishForm, actualTransportCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedTransportCost.toString()} /></div>
-            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP ăn uống thực tế</label><input type="number" min="0" value={finishForm.actualFoodCost} onChange={e => setFinishForm({...finishForm, actualFoodCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedFoodCost.toString()} /></div>
-            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP phòng nghỉ thực tế</label><input type="number" min="0" value={finishForm.actualAccommodationCost} onChange={e => setFinishForm({...finishForm, actualAccommodationCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedAccommodationCost.toString()} /></div>
-            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP tiếp khách thực tế</label><input type="number" min="0" value={finishForm.actualEntertainmentCost} onChange={e => setFinishForm({...finishForm, actualEntertainmentCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedEntertainmentCost.toString()} /></div>
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP xăng xe thực tế</label><input type="number" min="0" value={finishForm.actualTransportCost} onChange={e => setFinishForm({...finishForm, actualTransportCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedTransportCost?.toString() || '0'} /></div>
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP ăn uống thực tế</label><input type="number" min="0" value={finishForm.actualFoodCost} onChange={e => setFinishForm({...finishForm, actualFoodCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedFoodCost?.toString() || '0'} /></div>
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP phòng nghỉ thực tế</label><input type="number" min="0" value={finishForm.actualAccommodationCost} onChange={e => setFinishForm({...finishForm, actualAccommodationCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedAccommodationCost?.toString() || '0'} /></div>
+            <div><label className="block text-sm font-medium text-surface-700 mb-1">CP tiếp khách thực tế</label><input type="number" min="0" value={finishForm.actualEntertainmentCost} onChange={e => setFinishForm({...finishForm, actualEntertainmentCost: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder={trip.estimatedEntertainmentCost?.toString() || '0'} /></div>
           </div>
 
           <div><label className="block text-sm font-medium text-surface-700 mb-1">Đánh giá chung</label><textarea value={finishForm.summary} onChange={e => setFinishForm({...finishForm, summary: e.target.value})} rows={4} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder="Đánh giá hiệu quả so với mục tiêu đề ra..." /></div>

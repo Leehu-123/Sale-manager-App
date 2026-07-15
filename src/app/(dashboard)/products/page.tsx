@@ -7,8 +7,8 @@ import { formatCurrency, PRODUCT_GROUP_LABELS, PRODUCT_UNIT_LABELS, extractArray
 import { Modal } from '@/components/ui/Modal'
 
 interface Product {
-  id: string; code: string; name: string; group: string; unit: string
-  referencePrice: number; description?: string; isActive: boolean
+  id: string; code: string; name: string; glassType: string; unit: string
+  salePrice: number; description?: string; isActive: boolean
 }
 
 export default function ProductsPage() {
@@ -66,7 +66,7 @@ export default function ProductsPage() {
 
   const handleEdit = (product: Product) => {
     setEditId(product.id)
-    setForm({ code: product.code, name: product.name, group: product.group, unit: product.unit, referencePrice: String(product.referencePrice), description: product.description || '' })
+    setForm({ code: product.code, name: product.name, group: product.glassType, unit: product.unit, referencePrice: String(product.salePrice), description: product.description || '' })
     setShowModal(true)
   }
 
@@ -106,7 +106,7 @@ export default function ProductsPage() {
             <div key={product.id} onClick={() => handleEdit(product)} className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer border border-surface-100 hover:border-brand-200">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="badge bg-indigo-100 text-indigo-800">{PRODUCT_GROUP_LABELS[product.group]}</span>
+                  <span className="badge bg-indigo-100 text-indigo-800">{PRODUCT_GROUP_LABELS[product.glassType]}</span>
                   <h3 className="font-semibold text-surface-900 mt-2">{product.name}</h3>
                   <p className="text-xs text-surface-400 mt-1">{product.code}</p>
                 </div>
@@ -121,7 +121,7 @@ export default function ProductsPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between mt-4">
-                <span className="text-lg font-bold text-surface-900">{formatCurrency(product.referencePrice)}</span>
+                <span className="text-lg font-bold text-surface-900">{formatCurrency(product.salePrice)}</span>
                 <span className="text-xs text-surface-500">/ {PRODUCT_UNIT_LABELS[product.unit]}</span>
               </div>
               {product.description && <p className="text-xs text-surface-500 mt-2 line-clamp-2">{product.description}</p>}

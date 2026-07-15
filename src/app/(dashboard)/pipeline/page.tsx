@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { Plus, Search, LayoutGrid, List, ChevronRight } from 'lucide-react'
 import { formatCurrency, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
@@ -29,44 +30,72 @@ export default function PipelinePage() {
   const [saving, setSaving] = useState(false)
 
   const [form, setForm] = useState({
-    name: '', customerId: '', projectName: '', estimatedValue: '',
+    name: '', customerId: '', assignedToId: '', projectName: '', estimatedValue: '',
     probability: '50', products: [] as string[], notes: '',
   })
 
   const [assignedToId, setAssignedToId] = useState('')
   const [users, setUsers] = useState<Array<{ id: string; name: string }>>([])
 
+  const extractArray = (res: any) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (res.data && Array.isArray(res.data)) return res.data;
+    if (res.items && Array.isArray(res.items)) return res.items;
+    if (res.data && res.data.data && Array.isArray(res.data.data)) return res.data.data;
+    if (res.data && res.data.items && Array.isArray(res.data.items)) return res.data.items;
+    return [];
+  };
+
+  const { data: session } = useSession()
+
   const fetchOpportunities = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams({ limit: '200' })
+    const params = new URLSearchParams({ limit: '100' })
     if (search) params.set('search', search)
-    if (assignedToId) params.set('assignedToId', assignedToId)
+    
+    // Role based filtering
+    const userRole = session?.user?.role
+    if (userRole === 'SALES') {
+      params.set('assignedToId', session?.user?.id || '')
+    } else if (userRole === 'SALE_LEAD') {
+      if (assignedToId) {
+        params.set('assignedToId', assignedToId)
+      } else {
+        params.set('teamId', session?.user?.teamId || '')
+      }
+    } else {
+      if (assignedToId) params.set('assignedToId', assignedToId)
+    }
+
     try {
       const data = await apiClient.get(`/opportunities?${params}`)
-      setOpportunities(data.data || [])
-    } catch (err) { console.error(err) }
+      setOpportunities(extractArray(data))
+    } catch (err: any) { 
+      console.error(err)
+      alert('Lỗi khi tải dữ liệu: ' + (err.message || JSON.stringify(err)))
+    }
     finally { setLoading(false) }
-  }, [search, assignedToId])
+  }, [search, assignedToId, session])
 
   useEffect(() => { fetchOpportunities() }, [fetchOpportunities])
   useEffect(() => {
-    const extractArray = (res: any) => {
-      if (!res) return [];
-      if (Array.isArray(res)) return res;
-      if (res.data && Array.isArray(res.data)) return res.data;
-      if (res.items && Array.isArray(res.items)) return res.items;
-      if (res.data && res.data.data && Array.isArray(res.data.data)) return res.data.data;
-      if (res.data && res.data.items && Array.isArray(res.data.items)) return res.data.items;
-      return [];
-    };
-
     apiClient.get('/customers?page=1&limit=100').then(d => {
       setCustomers(extractArray(d));
     }).catch(() => {})
-    apiClient.get('/users?page=1&limit=100').then(d => {
-      setUsers(extractArray(d));
+    let url = '/users?page=1&limit=100'
+    if (session?.user?.role === 'SALE_LEAD' && session?.user?.teamId) {
+      url += `&teamId=${session.user.teamId}`
+    }
+    apiClient.get(url).then(d => {
+      const list = extractArray(d);
+      const salesAndManagers = list.filter((u: any) => {
+        if (!u.roles) return true;
+        return u.roles.some((r: string) => ['sale', 'sales', 'manager', 'admin', 'owner', 'sale_admin', 'sale_lead'].includes(r.toLowerCase()));
+      });
+      setUsers(salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
     }).catch(() => {})
-  }, [])
+  }, [session])
 
   const handleStageChange = async (id: string, newStage: string) => {
     if (newStage === 'LOST') {
@@ -96,13 +125,19 @@ export default function PipelinePage() {
     e.preventDefault()
     setSaving(true)
     try {
-      await apiClient.post('/opportunities', {
-        ...form,
-        estimatedValue: parseFloat(form.estimatedValue) || 0,
+      const payload: any = {
+        name: form.name,
+        customerId: form.customerId,
+        assignedToId: form.assignedToId,
         probability: parseInt(form.probability) || 50,
-      })
+      }
+      if (form.projectName) payload.projectName = form.projectName;
+      if (form.estimatedValue) payload.estimatedValue = parseFloat(form.estimatedValue);
+      if (form.notes) payload.notes = form.notes;
+
+      await apiClient.post('/opportunities', payload)
       setShowAddModal(false)
-      setForm({ name: '', customerId: '', projectName: '', estimatedValue: '', probability: '50', products: [], notes: '' })
+      setForm({ name: '', customerId: '', assignedToId: '', projectName: '', estimatedValue: '', probability: '50', products: [], notes: '' })
       fetchOpportunities()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
@@ -257,6 +292,13 @@ export default function PipelinePage() {
             <select value={form.customerId} onChange={e => setForm({...form, customerId: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
               <option value="">Chọn khách hàng</option>
               {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1">Người phụ trách *</label>
+            <select value={form.assignedToId} onChange={e => setForm({...form, assignedToId: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
+              <option value="">Chọn nhân viên</option>
+              {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">

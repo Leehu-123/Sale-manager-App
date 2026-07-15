@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react'
 import { Plus, Search, UserCog, Shield, Users as UsersIcon, Trash2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { formatDate } from '@/lib/utils'
+import { UserRouteModal } from '@/components/UserRouteModal'
+import { MapPin } from 'lucide-react'
 
 interface User {
   id: string; email: string; name: string; phone?: string; role: string
@@ -31,8 +33,11 @@ type ApiTeam = Partial<Team> & {
 const mapRole = (role?: string) => {
   const normalized = role?.toLowerCase()
   if (normalized === 'owner' || normalized === 'admin' || normalized === 'administrator') return 'ADMIN'
-  if (normalized === 'manager') return 'MANAGER'
-  return 'SALES'
+  if (normalized === 'manager' || normalized === 'sale_admin') return 'SALE_ADMIN'
+  if (normalized === 'sale_lead') return 'SALE_LEAD'
+  if (normalized === 'accountant') return 'ACCOUNTANT'
+  if (normalized === 'sales') return 'SALES'
+  return normalized ? normalized.toUpperCase() : 'UNKNOWN'
 }
 
 const normalizeUser = (user: ApiUser): User => ({
@@ -58,8 +63,8 @@ const normalizeTeam = (team: ApiTeam): Team => ({
   _count: { users: team._count?.users ?? 0 },
 })
 
-const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', MANAGER: 'Quản lý', SALES: 'Nhân viên' }
-const ROLE_COLORS: Record<string, string> = { ADMIN: 'bg-red-100 text-red-800', MANAGER: 'bg-purple-100 text-purple-800', SALES: 'bg-brand-100 text-blue-800' }
+const ROLE_LABELS: Record<string, string> = { ADMIN: 'Admin', SALE_ADMIN: 'Sale Admin', SALE_LEAD: 'Sale Lead', SALES: 'Nhân viên Sale', ACCOUNTANT: 'Kế toán' }
+const ROLE_COLORS: Record<string, string> = { ADMIN: 'bg-red-100 text-red-800', SALE_ADMIN: 'bg-purple-100 text-purple-800', SALE_LEAD: 'bg-indigo-100 text-indigo-800', SALES: 'bg-brand-100 text-blue-800', ACCOUNTANT: 'bg-emerald-100 text-emerald-800' }
 const STATUS_LABELS: Record<string, string> = { ACTIVE: 'Hoạt động', ON_LEAVE: 'Nghỉ phép', INACTIVE: 'Ngừng HĐ' }
 const STATUS_COLORS: Record<string, string> = { ACTIVE: 'bg-green-100 text-green-800', ON_LEAVE: 'bg-brand-100 text-amber-800', INACTIVE: 'bg-surface-100 text-surface-500' }
 
@@ -75,6 +80,8 @@ export default function UsersPage() {
   const [showTeamModal, setShowTeamModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editUser, setEditUser] = useState<User | null>(null)
+  const [routeUser, setRouteUser] = useState<User | null>(null)
+  const [editTeam, setEditTeam] = useState<Team | null>(null)
 
   const [form, setForm] = useState({ name: '', email: '', password: '123456', phone: '', role: 'SALES', teamId: '', status: 'ACTIVE' })
   const [teamForm, setTeamForm] = useState({ name: '', description: '' })
@@ -107,10 +114,11 @@ export default function UsersPage() {
     const isEdit = !!editUser
     const url = isEdit ? `/users/${editUser.id}` : '/users'
     const method = isEdit ? 'PUT' : 'POST'
-    try {
-      
     // Map form fields to Core API DTO
-    const mappedRole = form.role === 'ADMIN' ? 'admin' : (form.role === 'MANAGER' ? 'manager' : 'sales')
+    const mappedRole = form.role === 'ADMIN' ? 'admin' : 
+                       form.role === 'SALE_ADMIN' ? 'sale_admin' : 
+                       form.role === 'SALE_LEAD' ? 'sale_lead' : 
+                       form.role === 'ACCOUNTANT' ? 'accountant' : 'sales'
     const baseBody = {
       fullName: form.name,
       phone: form.phone,
@@ -118,17 +126,17 @@ export default function UsersPage() {
       teamId: form.teamId || null,
       isActive: form.status === 'ACTIVE'
     }
-    
     const body = isEdit 
-      ? { ...baseBody, ...(form.password ? { password: form.password } : {}) } 
-      : { ...baseBody, email: form.email, password: form.password }
+      ? { ...baseBody, email: form.email, username: form.email, ...(form.password ? { password: form.password } : {}) } 
+      : { ...baseBody, email: form.email, password: form.password, username: form.email }
 
+    try {
       await (method === 'POST' ? apiClient.post(url, body) : apiClient.put(url, body))
       setShowModal(false)
       setEditUser(null)
       setForm({ name: '', email: '', password: '123456', phone: '', role: 'SALES', teamId: '', status: 'ACTIVE' })
       fetchData()
-    } catch { alert('Có lỗi xảy ra') }
+    } catch (err: any) { alert(err.response?.data?.message || err.message || 'Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
 
@@ -136,8 +144,12 @@ export default function UsersPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      await apiClient.post('/teams', teamForm)
-      setShowTeamModal(false); setTeamForm({ name: '', description: '' }); fetchData()
+      if (editTeam) {
+        await apiClient.put(`/teams/${editTeam.id}`, teamForm)
+      } else {
+        await apiClient.post('/teams', teamForm)
+      }
+      setShowTeamModal(false); setEditTeam(null); setTeamForm({ name: '', description: '' }); fetchData()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
@@ -149,6 +161,12 @@ export default function UsersPage() {
       await apiClient.delete(`/teams/${id}`)
       fetchData()
     } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
+  }
+
+  const handleEditTeam = (team: Team) => {
+    setEditTeam(team)
+    setTeamForm({ name: team.name, description: '' })
+    setShowTeamModal(true)
   }
 
   const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
@@ -169,7 +187,7 @@ export default function UsersPage() {
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
-  if (!isAdmin && session?.user?.role !== 'MANAGER') {
+  if (!isAdmin && session?.user?.role !== 'SALE_ADMIN') {
     return <div className="text-center py-12 text-surface-500"><Shield size={48} className="mx-auto mb-3 text-surface-300" /><p className="font-medium">Bạn không có quyền truy cập trang này</p></div>
   }
 
@@ -182,7 +200,7 @@ export default function UsersPage() {
         </div>
         {isAdmin && (
           <div className="flex gap-2">
-            <button onClick={() => setShowTeamModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-surface-300 text-surface-700 rounded-lg text-sm font-medium hover:bg-surface-50">
+            <button onClick={() => { setEditTeam(null); setTeamForm({ name: '', description: '' }); setShowTeamModal(true) }} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-surface-300 text-surface-700 rounded-lg text-sm font-medium hover:bg-surface-50">
               <UsersIcon size={16} /> Thêm team
             </button>
             <button onClick={() => { setEditUser(null); setForm({ name: '', email: '', password: '123456', phone: '', role: 'SALES', teamId: '', status: 'ACTIVE' }); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
@@ -195,10 +213,10 @@ export default function UsersPage() {
       {/* Teams Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {teams.map(team => (
-          <div key={team.id} className="bg-white rounded-xl p-4 shadow-sm border border-surface-100 hover:shadow-md transition-shadow">
+          <div key={team.id} onClick={() => isAdmin ? handleEditTeam(team) : null} className={`bg-white rounded-xl p-4 shadow-sm border border-surface-100 transition-shadow ${isAdmin ? 'cursor-pointer hover:shadow-md hover:border-brand-200' : ''}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-surface-900">{team.name}</h3>
+                <h3 className="font-semibold text-surface-900 group-hover:text-brand-600">{team.name}</h3>
                 {isAdmin && <button onClick={(e) => handleDeleteTeam(team.id, e)} className="p-1 hover:bg-red-50 text-red-500 rounded"><Trash2 size={14} /></button>}
               </div>
               <span className="text-sm text-surface-500">{team._count.users} thành viên</span>
@@ -245,7 +263,7 @@ export default function UsersPage() {
                   <td className="font-medium">{user.name}</td>
                   <td className="text-sm">{user.email}</td>
                   <td className="text-sm">{user.phone || '-'}</td>
-                  <td><span className={`badge ${ROLE_COLORS[user.role]}`}>{ROLE_LABELS[user.role]}</span></td>
+                  <td><span className={`badge ${ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-800'}`}>{ROLE_LABELS[user.role] || user.role}</span></td>
                   <td className="text-sm">{user.team?.name || '-'}</td>
                   <td><span className={`badge ${STATUS_COLORS[user.status]}`}>{STATUS_LABELS[user.status]}</span></td>
                   <td className="text-center">{user._count.customers}</td>
@@ -255,6 +273,9 @@ export default function UsersPage() {
                   <td>
                     {isAdmin && session?.user?.id !== user.id && (
                       <div className="flex items-center gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); setRouteUser(user) }} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded" title="Xem tua tuyến">
+                          <MapPin size={14} />
+                        </button>
                         <button onClick={(e) => { e.stopPropagation(); handleEdit(user) }} className="p-1.5 hover:bg-brand-50 text-brand-600 rounded" title="Sửa nhân viên">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
@@ -278,12 +299,10 @@ export default function UsersPage() {
             <label className="block text-sm font-medium text-surface-700 mb-1">Họ tên *</label>
             <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
-          {!editUser && (
-            <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Email *</label>
-              <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1">Email *</label>
+            <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-surface-700 mb-1">{editUser ? 'Đổi mật khẩu' : 'Mật khẩu *'}</label>
@@ -326,8 +345,8 @@ export default function UsersPage() {
         </form>
       </Modal>
 
-      {/* Add Team Modal */}
-      <Modal isOpen={showTeamModal} onClose={() => setShowTeamModal(false)} title="Thêm team mới">
+      {/* Add/Edit Team Modal */}
+      <Modal isOpen={showTeamModal} onClose={() => { setShowTeamModal(false); setEditTeam(null) }} title={editTeam ? 'Cập nhật thông tin team' : 'Thêm team mới'}>
         <form onSubmit={handleTeamSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Tên team *</label>
@@ -338,11 +357,20 @@ export default function UsersPage() {
             <textarea value={teamForm.description} onChange={e => setTeamForm({...teamForm, description: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" rows={3} />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowTeamModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang tạo...' : 'Tạo team'}</button>
+            <button type="button" onClick={() => { setShowTeamModal(false); setEditTeam(null) }} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang lưu...' : editTeam ? 'Cập nhật' : 'Tạo team'}</button>
           </div>
         </form>
       </Modal>
+      {/* Route Modal */}
+      {routeUser && (
+        <UserRouteModal 
+          isOpen={!!routeUser} 
+          onClose={() => setRouteUser(null)} 
+          userId={routeUser.id} 
+          userName={routeUser.name} 
+        />
+      )}
     </div>
   )
 }

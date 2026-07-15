@@ -13,9 +13,9 @@ interface OrderDetail {
   vatRate: number; vatAmount: number; projectName?: string; notes?: string
   signedDate?: string; expectedDeliveryDate?: string; createdAt: string
   customer: { name: string; code: string; phone?: string; email?: string }
-  assignedTo: { name: string }
+  assignedTo?: { name?: string; fullName?: string }
   items: Array<{ description: string; quantity: number; unitPrice: number; area?: number; total: number; product?: { name: string } }>
-  payments: Array<{ id: string; amount: number; paymentDate: string; method?: string; reference?: string; notes?: string; createdBy: { name: string } }>
+  payments: Array<{ id: string; amount: number; paymentDate: string; method?: string; reference?: string; notes?: string; createdBy?: { name?: string; fullName?: string } }>
 }
 
 export default function OrderDetailPage() {
@@ -29,8 +29,8 @@ export default function OrderDetailPage() {
 
   const fetchOrder = async () => {
     try {
-      const data = await apiClient.get(`/orders/${params.id}`)
-      setOrder(data)
+      const res = await apiClient.get(`/orders/${params.id}`)
+      setOrder(res.data || res)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -51,7 +51,7 @@ export default function OrderDetailPage() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await apiClient.put(`/orders/${params.id}`, { status: newStatus })
+      await apiClient.patch(`/orders/${params.id}/status`, { status: newStatus })
       fetchOrder()
     } catch { alert('Có lỗi xảy ra') }
   }
@@ -70,14 +70,15 @@ export default function OrderDetailPage() {
               <span className="badge bg-brand-100 text-blue-800">{ORDER_STATUS_LABELS[order.status]}</span>
               <span className={`badge ${PAYMENT_STATUS_COLORS[order.paymentStatus]}`}>{PAYMENT_STATUS_LABELS[order.paymentStatus]}</span>
             </div>
-            <p className="text-sm text-surface-500">{order.customer.name} · {order.assignedTo.name}</p>
+            <p className="text-sm text-surface-500">{order.customer?.name} · {order.assignedTo?.fullName || order.assignedTo?.name || 'Chưa phân công'}</p>
           </div>
         </div>
         <div className="flex gap-2">
-          {order.status === 'NEW' && <button onClick={() => handleStatusChange('IN_PRODUCTION')} className="px-3 py-2 bg-brand-500 text-white rounded-lg text-sm">Bắt đầu SX</button>}
-          {order.status === 'IN_PRODUCTION' && <button onClick={() => handleStatusChange('IN_PROGRESS')} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm">Thi công</button>}
-          {order.status === 'IN_PROGRESS' && <button onClick={() => handleStatusChange('COMPLETED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Hoàn thành</button>}
-          <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 px-4 py-2 gradient-blue text-white rounded-lg text-sm font-medium">
+          {order.status === 'NEW' && <button onClick={() => handleStatusChange('CONFIRMED')} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm">Xác nhận đơn hàng</button>}
+          {order.status === 'CONFIRMED' && <button onClick={() => handleStatusChange('DELIVERING')} className="px-3 py-2 bg-amber-500 text-white rounded-lg text-sm">Vận chuyển đơn hàng</button>}
+          {order.status === 'DELIVERING' && <button onClick={() => handleStatusChange('DEBT_TRACKING')} className="px-3 py-2 bg-orange-500 text-white rounded-lg text-sm">Theo dõi công nợ</button>}
+          {order.status === 'DEBT_TRACKING' && order.remainingAmount <= 0 && <button onClick={() => handleStatusChange('COMPLETED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Kết thúc đơn hàng</button>}
+          <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
             <DollarSign size={16} /> Thêm thanh toán
           </button>
         </div>
@@ -125,7 +126,7 @@ export default function OrderDetailPage() {
                   <td>{p.method || '-'}</td>
                   <td className="font-mono text-xs">{p.reference || '-'}</td>
                   <td>{p.notes || '-'}</td>
-                  <td>{p.createdBy.name}</td>
+                  <td>{p.createdBy?.fullName || p.createdBy?.name || 'Hệ thống'}</td>
                 </tr>
               ))}
             </tbody>
@@ -143,7 +144,7 @@ export default function OrderDetailPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Số tiền *</label>
-            <input type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
+            <input type="number" min="0" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Ngày thanh toán *</label>
@@ -162,8 +163,8 @@ export default function OrderDetailPage() {
             <input value={paymentForm.reference} onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowPaymentModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm">Hủy</button>
-            <button type="submit" disabled={saving} className="flex-1 py-2 gradient-blue text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang lưu...' : 'Thêm'}</button>
+            <button type="button" onClick={() => setShowPaymentModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50 transition-colors">Hủy</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors">{saving ? 'Đang lưu...' : 'Thêm'}</button>
           </div>
         </form>
       </Modal>

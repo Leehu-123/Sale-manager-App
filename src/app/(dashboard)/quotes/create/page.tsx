@@ -6,7 +6,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { apiClient } from '@/lib/api-client'
 
-interface Product { id: string; name: string; salePrice: number }
+interface Product { id: string; name: string; code?: string; salePrice: number }
 interface Customer { id: string; name: string; code: string }
 interface QuoteItem {
   productId?: string; description: string; unit?: string; specification?: string; thickness?: string
@@ -90,11 +90,41 @@ export default function CreateQuotePage() {
     e.preventDefault()
     if (!customerId) { alert('Vui lòng chọn khách hàng'); return }
     if (!items.some(i => i.description)) { alert('Vui lòng thêm ít nhất 1 hạng mục'); return }
+    
+    // Clean up to avoid forbidNonWhitelisted validation error
+    const cleanedItems = items.map(item => {
+      const { productId, total, ...rest } = item;
+      const cleanItem: any = { ...rest };
+      if (productId) cleanItem.productId = productId;
+      
+      // Aggressively clean up empty strings and zeros for optional fields
+      if (cleanItem.thickness === "") delete cleanItem.thickness;
+      if (cleanItem.unit === "") delete cleanItem.unit;
+      if (cleanItem.specification === "") delete cleanItem.specification;
+      if (!cleanItem.length) delete cleanItem.length;
+      if (!cleanItem.width) delete cleanItem.width;
+      if (!cleanItem.area) delete cleanItem.area;
+      if (!cleanItem.discount) delete cleanItem.discount;
+      
+      return cleanItem;
+    });
+
+    const payload: any = { customerId, items: cleanedItems };
+    if (shippingCost) payload.shippingCost = shippingCost;
+    if (installationCost) payload.installationCost = installationCost;
+    if (discount) payload.discount = discount;
+    if (vatRate !== undefined) payload.vatRate = vatRate;
+    if (terms) payload.terms = terms;
+    if (notes) payload.notes = notes;
+
     setSaving(true)
     try {
-      const quote = await apiClient.post('/quotes', { customerId, shippingCost, installationCost, discount, vatRate, terms, notes, items })
+      const quote = await apiClient.post('/quotes', payload)
       router.push(`/quotes/${quote.data.id}`)
-    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
+    } catch (err: any) { 
+      const msg = err.response?.data?.message || err.message || 'Có lỗi xảy ra';
+      alert(Array.isArray(msg) ? msg.join(', ') : msg);
+    }
     finally { setSaving(false) }
   }
 
@@ -148,7 +178,7 @@ export default function CreateQuotePage() {
                     <td className="p-2 text-center text-surface-400">{i + 1}</td>
                     <td className="p-2">
                       <select value={item.productId || ''} onChange={e => updateItem(i, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs mb-1">
-                        <option value="">Chọn SP</option>{products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <option value="">Chọn SP</option>{products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} - ${p.name}` : p.name}</option>)}
                       </select>
                       <input placeholder="Ghi chú SP" value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" />
                     </td>

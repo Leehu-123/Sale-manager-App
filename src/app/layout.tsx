@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ['latin', 'vietnamese'] })
 export const metadata: Metadata = {
   title: 'Dafa Sales - Quản lý kinh doanh',
   description: 'Hệ thống quản lý phòng kinh doanh - Dafa Kính Xây Dựng',
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

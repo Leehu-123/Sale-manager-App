@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Search, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatCurrency, formatDate, ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/lib/utils'
 
@@ -14,9 +15,9 @@ interface Order {
 }
 
 const ORDER_STATUS_COLORS: Record<string, string> = {
-  NEW: 'bg-brand-100 text-blue-800', IN_PRODUCTION: 'bg-brand-100 text-amber-800',
-  IN_PROGRESS: 'bg-indigo-100 text-indigo-800', COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  NEW: 'bg-brand-100 text-blue-800', CONFIRMED: 'bg-indigo-100 text-indigo-800',
+  DELIVERING: 'bg-amber-100 text-amber-800', DEBT_TRACKING: 'bg-orange-100 text-orange-800', 
+  COMPLETED: 'bg-green-100 text-green-800', CANCELLED: 'bg-red-100 text-red-800',
 }
 
 export default function OrdersPage() {
@@ -30,12 +31,23 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [paymentFilter, setPaymentFilter] = useState('')
 
+  const { data: session } = useSession()
+
   const fetchOrders = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams({ page: String(page), limit: '20' })
     if (search) params.set('search', search)
     if (statusFilter) params.set('status', statusFilter)
     if (paymentFilter) params.set('paymentStatus', paymentFilter)
+    
+    // Role based filtering
+    const userRole = session?.user?.role
+    if (userRole === 'SALES') {
+      params.set('assignedToId', session?.user?.id || '')
+    } else if (userRole === 'SALE_LEAD') {
+      params.set('teamId', session?.user?.teamId || '')
+    }
+
     try {
       const data = await apiClient.get(`/orders?${params}`)
       setOrders(data.data || [])
@@ -43,7 +55,7 @@ export default function OrdersPage() {
       setTotalPages(data.totalPages || 1)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
-  }, [page, search, statusFilter, paymentFilter])
+  }, [page, search, statusFilter, paymentFilter, session])
 
   useEffect(() => { fetchOrders() }, [fetchOrders])
 
@@ -99,7 +111,7 @@ export default function OrdersPage() {
               orders.map(order => (
                 <tr key={order.id} onClick={() => router.push(`/orders/${order.id}`)} className="cursor-pointer hover:bg-brand-50/50">
                   <td className="font-mono text-xs">{order.code}</td>
-                  <td className="font-medium">{order.customer.name}</td>
+                  <td className="font-medium">{order.customer?.name}</td>
                   <td className="text-sm">{order.projectName || '-'}</td>
                   <td className="font-semibold">{formatCurrency(order.total)}</td>
                   <td className="text-green-600">{formatCurrency(order.paidAmount)}</td>

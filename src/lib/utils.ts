@@ -5,7 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined || isNaN(amount)) return '0 ₫';
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
@@ -17,8 +18,10 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat('vi-VN').format(num)
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return '';
   const d = new Date(date)
+  if (isNaN(d.getTime())) return '';
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -26,8 +29,10 @@ export function formatDate(date: Date | string): string {
   }).format(d)
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string | null | undefined): string {
+  if (!date) return '';
   const d = new Date(date)
+  if (isNaN(d.getTime())) return '';
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -138,8 +143,9 @@ export const QUOTE_STATUS_LABELS: Record<string, string> = {
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   NEW: 'Mới tạo',
-  IN_PRODUCTION: 'Đang sản xuất',
-  IN_PROGRESS: 'Đang thi công',
+  CONFIRMED: 'Đã xác nhận',
+  DELIVERING: 'Đang vận chuyển',
+  DEBT_TRACKING: 'Theo dõi công nợ',
   COMPLETED: 'Đã hoàn thành',
   CANCELLED: 'Đã hủy',
 }

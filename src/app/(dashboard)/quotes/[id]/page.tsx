@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ArrowLeft, Plus, Trash2, Save, Printer } from 'lucide-react'
 import { formatCurrency, QUOTE_STATUS_LABELS, PRODUCT_UNIT_LABELS } from '@/lib/utils'
 import { apiClient } from '@/lib/api-client'
@@ -17,13 +18,15 @@ interface QuoteDetail {
   vatAmount: number; total: number; shippingCost: number; installationCost: number; discount: number
   terms?: string; notes?: string; expiryDate?: string; createdAt: string
   customer: { id: string; name: string; code: string; phone?: string; email?: string; address?: string }
-  createdBy: { name: string }
+  createdBy: { name?: string; fullName?: string }
   items: QuoteItem[]
+  _count?: { salesOrders: number }
 }
 
 interface Product { id: string; code: string; name: string; unit: string; salePrice: number }
 
 export default function QuoteDetailPage() {
+  const { data: session } = useSession()
   const params = useParams()
   const router = useRouter()
   const [quote, setQuote] = useState<QuoteDetail | null>(null)
@@ -114,25 +117,48 @@ export default function QuoteDetailPage() {
   const vatAmount = Math.round(subtotal * vatRate / 100)
   const grandTotal = subtotal + vatAmount
 
+  const getCleanItems = () => {
+    return items.map((item: any) => {
+      const cleanItem: any = {
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      };
+      if (item.productId) cleanItem.productId = item.productId;
+      if (item.thickness) cleanItem.thickness = item.thickness;
+      if (item.unit) cleanItem.unit = item.unit;
+      if (item.specification) cleanItem.specification = item.specification;
+      if (item.length) cleanItem.length = item.length;
+      if (item.width) cleanItem.width = item.width;
+      if (item.area) cleanItem.area = item.area;
+      if (item.discount) cleanItem.discount = item.discount;
+      return cleanItem;
+    });
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
       const updated = await apiClient.put(`/quotes/${params.id}`, {
         customerId: quote?.customer.id,
         shippingCost, installationCost, discount, vatRate, terms, notes,
-        items: items.map((item, i) => ({ ...item, sortOrder: i })),
+        items: getCleanItems(),
       })
       setQuote({ ...quote!, ...updated.data })
       alert('Đã lưu báo giá')
-    } catch { alert('Có lỗi xảy ra') }
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await apiClient.put(`/quotes/${params.id}`, { status: newStatus, customerId: quote?.customer.id, items })
+      if (newStatus === 'SENT') {
+        await apiClient.post(`/quotes/${params.id}/send`, {});
+      } else {
+        await apiClient.put(`/quotes/${params.id}`, { status: newStatus, customerId: quote?.customer.id, items: getCleanItems() })
+      }
       setQuote(q => q ? { ...q, status: newStatus } : null)
-    } catch { alert('Có lỗi xảy ra') }
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
   }
 
   const handleCreateOrder = async () => {
@@ -142,9 +168,12 @@ export default function QuoteDetailPage() {
       const order = await apiClient.post('/orders', {
         quoteId: quote?.id,
         customerId: quote?.customer.id,
-        discount: 0,
+        assignedToId: (session?.user as any)?.id,
+        items: getCleanItems(),
+        discount: quote?.discount || 0,
+        vatRate: quote?.vatRate || 10,
       })
-      router.push(`/orders/${order.data.id}`)
+      router.push(`/orders/${order.data?.id || order.id}`)
     } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
     finally { setSaving(false) }
   }
@@ -164,13 +193,14 @@ export default function QuoteDetailPage() {
                 {QUOTE_STATUS_LABELS[quote.status]}
               </span>
             </div>
-            <p className="text-sm text-surface-500">Khách hàng: {quote.customer.name} · Tạo bởi: {quote.createdBy.name}</p>
+            <p className="text-sm text-surface-500">Khách hàng: {quote.customer.name} · Tạo bởi: {quote.createdBy?.fullName || quote.createdBy?.name || 'Hệ thống'}</p>
           </div>
         </div>
         <div className="flex gap-2">
           {quote.status === 'DRAFT' && <button onClick={() => handleStatusChange('SENT')} className="px-3 py-2 bg-brand-500 text-white rounded-lg text-sm">Gửi khách</button>}
           {quote.status === 'SENT' && <button onClick={() => handleStatusChange('APPROVED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Duyệt</button>}
-          {quote.status === 'APPROVED' && <button onClick={handleCreateOrder} disabled={saving} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm disabled:opacity-50">Tạo đơn hàng</button>}
+          {quote.status === 'APPROVED' && (!quote._count || quote._count.salesOrders === 0) && <button onClick={handleCreateOrder} disabled={saving} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm disabled:opacity-50">Tạo đơn hàng</button>}
+          {quote._count && quote._count.salesOrders > 0 && <span className="px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium">Đã tạo đơn hàng</span>}
           <div className="flex items-center gap-2 print:hidden bg-surface-100 px-3 py-1.5 rounded-lg mr-2">
             <input type="checkbox" id="showDiscount" checked={showDiscount} onChange={e => setShowDiscount(e.target.checked)} className="rounded text-brand-600" />
             <label htmlFor="showDiscount" className="text-sm cursor-pointer select-none">Hiện CK bản in</label>
@@ -226,9 +256,9 @@ export default function QuoteDetailPage() {
                   <td className="p-2">
                     <select disabled={quote.status !== 'DRAFT'} value={item.productId || ''} onChange={e => updateItem(index, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden mb-1">
                       <option value="">Chọn SP</option>
-                      {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} - ${p.name}` : p.name}</option>)}
                     </select>
-                    <div className="hidden print:block font-medium">{products.find(p => p.id === item.productId)?.name || item.description}</div>
+                    <div className="hidden print:block font-medium">{(() => { const pt = products.find(p => p.id === item.productId); return pt ? (pt.code ? `${pt.code} - ${pt.name}` : pt.name) : item.description; })()}</div>
                     <input disabled={quote.status !== 'DRAFT'} value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" placeholder="Ghi chú thêm" />
                   </td>
                   <td className="p-2">

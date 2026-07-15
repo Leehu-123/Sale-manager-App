@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Plus, Search, Filter, Users, UserPlus, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   CUSTOMER_STATUS_LABELS, CUSTOMER_STATUS_COLORS, CUSTOMER_TYPE_LABELS,
@@ -12,7 +13,7 @@ import { apiClient } from '@/lib/api-client'
 
 interface Customer {
   id: string; code: string; name: string; type: string; phone?: string; email?: string
-  source: string; status: string; assignedTo?: { name: string }; createdAt: string
+  source: string; status: string; assignedTo?: { id: string; name: string }; createdAt: string
   contactPerson?: string; address?: string; province?: string; projectName?: string
   productNeeds?: string[]; estimatedArea?: number; estimatedBudget?: number
   notes?: string; nextFollowUpDate?: string
@@ -32,6 +33,7 @@ export default function CustomersPage() {
   const [sourceFilter, setSourceFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
   const [users, setUsers] = useState<UserOption[]>([])
   const [saving, setSaving] = useState(false)
 
@@ -44,6 +46,8 @@ export default function CustomersPage() {
 
   const [assignedToIdFilter, setAssignedToIdFilter] = useState('')
 
+  const { data: session } = useSession()
+
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams({ page: String(page), limit: '20' })
@@ -51,7 +55,20 @@ export default function CustomersPage() {
     if (statusFilter) params.set('status', statusFilter)
     if (sourceFilter) params.set('source', sourceFilter)
     if (typeFilter) params.set('type', typeFilter)
-    if (assignedToIdFilter) params.set('assignedToId', assignedToIdFilter)
+    
+    // Role based filtering
+    const userRole = session?.user?.role
+    if (userRole === 'SALES') {
+      params.set('assignedToId', session?.user?.id || '')
+    } else if (userRole === 'SALE_LEAD') {
+      if (assignedToIdFilter) {
+        params.set('assignedToId', assignedToIdFilter)
+      } else {
+        params.set('teamId', session?.user?.teamId || '')
+      }
+    } else {
+      if (assignedToIdFilter) params.set('assignedToId', assignedToIdFilter)
+    }
 
     try {
       const data = await apiClient.get(`/customers?${params}`)
@@ -60,27 +77,97 @@ export default function CustomersPage() {
       setTotalPages(data.meta?.totalPages || 1)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
-  }, [page, search, statusFilter, sourceFilter, typeFilter, assignedToIdFilter])
+  }, [page, search, statusFilter, sourceFilter, typeFilter, assignedToIdFilter, session])
 
   useEffect(() => { fetchCustomers() }, [fetchCustomers])
   useEffect(() => {
-    apiClient.get('/users').then(d => setUsers(Array.isArray(d.data) ? d.data : [])).catch(() => {})
-  }, [])
+    let url = '/users?limit=100'
+    if (session?.user?.role === 'SALE_LEAD' && session?.user?.teamId) {
+      url += `&teamId=${session.user.teamId}`
+    }
+    apiClient.get(url).then(d => {
+      const list = Array.isArray(d.data) ? d.data : [];
+      const salesAndManagers = list.filter((u: any) => {
+        if (!u.roles) return true; // if roles not loaded, keep them just in case
+        return u.roles.some((r: string) => ['sale', 'sales', 'manager', 'admin', 'owner', 'sale_admin', 'sale_lead'].includes(r.toLowerCase()));
+      });
+      setUsers(salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
+    }).catch(() => {})
+  }, [session])
+
+  const resetForm = () => {
+    setEditId(null);
+    setForm({ type: 'INDIVIDUAL', name: '', contactPerson: '', phone: '', email: '', address: '', province: '', projectName: '', source: 'WEBSITE', status: 'NEW', productNeeds: [], estimatedArea: '', estimatedBudget: '', notes: '', assignedToId: '' })
+  }
+
+  const handleEditClick = (c: Customer, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditId(c.id);
+      let needs = [];
+      if (Array.isArray(c.productNeeds)) {
+        needs = c.productNeeds;
+      } else if (typeof c.productNeeds === 'string') {
+        try {
+          needs = JSON.parse(c.productNeeds);
+          if (!Array.isArray(needs)) needs = (c.productNeeds as any).split(',').map((s: string) => s.trim()).filter(Boolean);
+        } catch {
+          needs = (c.productNeeds as any).split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+      }
+
+      setForm({
+        type: c.type || 'INDIVIDUAL',
+        name: c.name || '',
+        contactPerson: c.contactPerson || '',
+        phone: c.phone || '',
+        email: c.email || '',
+        address: c.address || '',
+        province: c.province || '',
+        projectName: c.projectName || '',
+        source: c.source || 'WEBSITE',
+        status: c.status || 'NEW',
+        productNeeds: needs,
+        estimatedArea: c.estimatedArea ? String(c.estimatedArea) : '',
+        estimatedBudget: c.estimatedBudget ? String(c.estimatedBudget) : '',
+        notes: c.notes || '',
+        assignedToId: c.assignedTo?.id || ''
+      });
+    setShowAddModal(true);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     try {
-      await apiClient.post('/customers', {
+      const payload: any = {
         ...form,
-        estimatedArea: form.estimatedArea ? parseFloat(form.estimatedArea) : null,
-        estimatedBudget: form.estimatedBudget ? parseFloat(form.estimatedBudget) : null,
+        estimatedArea: form.estimatedArea ? parseFloat(form.estimatedArea) : undefined,
+        estimatedBudget: form.estimatedBudget ? parseFloat(form.estimatedBudget) : undefined,
         assignedToId: form.assignedToId || undefined
-      })
+      };
+      
+      // Clean up empty strings
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === '' || payload[key] === null || payload[key] === undefined) {
+          delete payload[key];
+        }
+      });
+      // But ensure name is present
+      payload.name = form.name;
+      
+      if (editId) {
+        await apiClient.put(`/customers/${editId}`, payload);
+      } else {
+        await apiClient.post('/customers', payload);
+      }
+      
       setShowAddModal(false)
-      setForm({ type: 'INDIVIDUAL', name: '', contactPerson: '', phone: '', email: '', address: '', province: '', projectName: '', source: 'WEBSITE', status: 'NEW', productNeeds: [], estimatedArea: '', estimatedBudget: '', notes: '', assignedToId: '' })
+      resetForm()
       fetchCustomers()
-    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
+    } catch (err: any) { 
+      const msg = err.response?.data?.message || err.message || 'Có lỗi xảy ra';
+      alert(Array.isArray(msg) ? msg.join(', ') : msg);
+    }
     finally { setSaving(false) }
   }
 
@@ -191,19 +278,21 @@ export default function CustomersPage() {
                     <td><span className={`badge ${CUSTOMER_STATUS_COLORS[customer.status] || 'bg-surface-100 text-surface-800'}`}>{CUSTOMER_STATUS_LABELS[customer.status] || customer.status}</span></td>
                     <td className="text-sm text-surface-500">{formatDate(customer.createdAt)}</td>
                     <td className="text-center">
-                      <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-center gap-2 transition-opacity">
                         <button 
-                          onClick={(e) => { e.stopPropagation(); /* TODO Edit */ }}
+                          onClick={(e) => handleEditClick(customer, e)}
                           className="p-1.5 text-brand-600 hover:bg-brand-50 rounded" title="Sửa"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); if(confirm('Bạn có chắc muốn xóa?')) apiClient.delete(`/customers/${customer.id}`).then(fetchCustomers) }}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Xóa"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                        </button>
+                        {session?.user?.role !== 'SALES' && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); if(confirm('Bạn có chắc muốn xóa?')) apiClient.delete(`/customers/${customer.id}`).then(fetchCustomers) }}
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Xóa"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -230,9 +319,15 @@ export default function CustomersPage() {
       </div>
 
       {/* Add Customer Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Thêm khách hàng mới" size="lg">
+      <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); resetForm(); }} title={editId ? "Sửa thông tin khách hàng" : "Thêm khách hàng mới"} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Trạng thái *</label>
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
+                {Object.entries(CUSTOMER_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-surface-700 mb-1">Loại khách hàng *</label>
               <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">

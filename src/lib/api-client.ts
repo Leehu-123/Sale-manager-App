@@ -35,10 +35,23 @@ async function handleResponse(response: Response) {
     throw new Error('Unauthorized');
   }
 
-  const data = await response.json().catch(() => null);
+  let data = null;
+  let text = '';
+  try {
+    text = await response.text();
+    data = JSON.parse(text);
+  } catch (e) {
+    // Not JSON
+  }
   
   if (!response.ok) {
-    throw new Error(data?.message || 'Something went wrong');
+    let errMsg = data?.message || data?.error || `HTTP ${response.status}: ${text || response.statusText}`;
+    if (Array.isArray(errMsg)) {
+      errMsg = errMsg.map((e: any) => typeof e === 'object' ? JSON.stringify(e) : e).join(', ');
+    } else if (typeof errMsg === 'object') {
+      errMsg = JSON.stringify(errMsg);
+    }
+    throw new Error(errMsg);
   }
   
   return data;
@@ -48,6 +61,7 @@ export const apiClient = {
   async get(endpoint: string, options?: RequestInit) {
     const headers = await getHeaders(options?.headers);
     const response = await fetch(`${API_URL}${endpoint}`, {
+      cache: 'no-store',
       ...options,
       headers,
       method: 'GET',

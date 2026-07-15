@@ -28,9 +28,11 @@ export default function TasksPage() {
   const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([])
   const [users, setUsers] = useState<Array<{ id: string; name: string }>>([])
 
+  const [editId, setEditId] = useState<string | null>(null)
+
   const [form, setForm] = useState({
     title: '', customerId: '', type: 'CALL', dueDate: '', priority: 'MEDIUM',
-    assignedToId: '', notes: '',
+    assignedToId: '', notes: '', status: 'TODO'
   })
 
   const fetchTasks = useCallback(async () => {
@@ -49,24 +51,71 @@ export default function TasksPage() {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
   useEffect(() => {
-    apiClient.get('/customers?limit=100').then(d => setCustomers(d.data || [])).catch(() => {})
-    apiClient.get('/users').then(d => setUsers(Array.isArray(d) ? d : [])).catch(() => {})
+    const extractArray = (res: any) => {
+      if (!res) return [];
+      if (Array.isArray(res)) return res;
+      if (res.data && Array.isArray(res.data)) return res.data;
+      if (res.items && Array.isArray(res.items)) return res.items;
+      if (res.data?.data && Array.isArray(res.data.data)) return res.data.data;
+      return [];
+    };
+
+    apiClient.get('/customers?limit=100').then(d => setCustomers(extractArray(d))).catch(() => {})
+    apiClient.get('/users?limit=100').then(d => {
+      const list = extractArray(d);
+      setUsers(list.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
+    }).catch(() => {})
   }, [])
+
+  const resetForm = () => {
+    setEditId(null)
+    setForm({ title: '', customerId: '', type: 'CALL', dueDate: '', priority: 'MEDIUM', assignedToId: '', notes: '', status: 'TODO' })
+  }
+
+  const handleEditClick = (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditId(task.id)
+    setForm({
+      title: task.title,
+      customerId: task.customer?.id || '',
+      type: task.type,
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+      priority: task.priority,
+      assignedToId: task.assignedTo?.id || '',
+      notes: task.notes || '',
+      status: task.status || 'TODO'
+    })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Bạn có chắc muốn xóa công việc này?')) return
+    try {
+      await apiClient.delete(`/sales-tasks/${id}`)
+      fetchTasks()
+    } catch { alert('Có lỗi xảy ra') }
+  }
 
   const handleComplete = async (id: string) => {
     try {
-      await apiClient.put(`/tasks/${id}`, { status: 'DONE' })
+      await apiClient.post(`/sales-tasks/${id}/complete`, {})
       fetchTasks()
-    } catch { alert('Có lỗi xảy ra') }
+    } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     try {
-      await apiClient.post('/sales-tasks', { ...form, customerId: form.customerId || undefined, assignedToId: form.assignedToId || session?.user?.id })
+      const payload = { ...form, customerId: form.customerId || undefined, assignedToId: form.assignedToId || session?.user?.id }
+      if (editId) {
+        await apiClient.put(`/sales-tasks/${editId}`, payload)
+      } else {
+        await apiClient.post('/sales-tasks', payload)
+      }
       setShowModal(false)
-      setForm({ title: '', customerId: '', type: 'CALL', dueDate: '', priority: 'MEDIUM', assignedToId: '', notes: '' })
+      resetForm()
       fetchTasks()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
@@ -94,7 +143,7 @@ export default function TasksPage() {
           <h1 className="text-2xl font-bold text-surface-900">Công việc</h1>
           <p className="text-surface-500 text-sm mt-1">Quản lý task và lịch chăm sóc khách hàng</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
+        <button onClick={() => { resetForm(); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
           <Plus size={16} /> Tạo task
         </button>
       </div>
@@ -139,7 +188,7 @@ export default function TasksPage() {
           </div>
         ) : (
           filteredTasks.map(task => (
-            <div key={task.id} className={`bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all ${isOverdue(task) ? 'border-l-4 border-red-400' : isToday(task.dueDate) ? 'border-l-4 border-amber-400' : 'border-l-4 border-surface-200'}`}>
+            <div key={task.id} className={`bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all group ${isOverdue(task) ? 'border-l-4 border-red-400' : isToday(task.dueDate) ? 'border-l-4 border-amber-400' : 'border-l-4 border-surface-200'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button onClick={() => handleComplete(task.id)} disabled={task.status === 'DONE'} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${task.status === 'DONE' ? 'bg-green-500 border-green-500' : 'border-surface-300 hover:border-green-400'}`}>
@@ -154,10 +203,18 @@ export default function TasksPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 transition-opacity mr-2">
+                    <button onClick={(e) => handleEditClick(task, e)} className="p-1.5 text-brand-600 hover:bg-brand-50 rounded" title="Sửa">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button onClick={(e) => handleDelete(task.id, e)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Xóa">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                  </div>
                   <span className={`badge ${TASK_PRIORITY_COLORS[task.priority]}`}>{TASK_PRIORITY_LABELS[task.priority]}</span>
                   <span className={`text-xs ${isOverdue(task) ? 'text-red-600 font-medium' : 'text-surface-500'}`}>{formatDate(task.dueDate)}</span>
                   <span className={`badge ${TASK_STATUS_COLORS[task.status]}`}>{TASK_STATUS_LABELS[task.status]}</span>
-                  <span className="text-xs text-surface-400">{task.assignedTo.name}</span>
+                  <span className="text-xs text-surface-400">{task.assignedTo?.name || 'Chưa phân công'}</span>
                 </div>
               </div>
             </div>
@@ -167,12 +224,12 @@ export default function TasksPage() {
 
       <Modal 
         isOpen={showModal} 
-        onClose={() => setShowModal(false)} 
-        title="Tạo công việc mới"
+        onClose={() => { setShowModal(false); resetForm(); }} 
+        title={editId ? "Sửa công việc" : "Tạo công việc mới"}
         footer={
           <>
-            <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
-            <button type="submit" form="task-form" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang tạo...' : 'Tạo task'}</button>
+            <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm hover:bg-surface-50">Hủy</button>
+            <button type="submit" form="task-form" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">{saving ? 'Đang lưu...' : (editId ? 'Lưu thay đổi' : 'Tạo task')}</button>
           </>
         }
       >
@@ -181,7 +238,13 @@ export default function TasksPage() {
             <label className="block text-sm font-medium text-surface-700 mb-1">Tiêu đề *</label>
             <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Trạng thái *</label>
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
+                {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-surface-700 mb-1">Loại *</label>
               <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
