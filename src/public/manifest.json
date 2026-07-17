@@ -1,0 +1,16 @@
+{
+  "name": "Dafa Sales",
+  "short_name": "Dafa",
+  "description": "Ứng dụng quản lý Sales cho Dafa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#D35400",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/x-icon"
+    }
+  ]
+}

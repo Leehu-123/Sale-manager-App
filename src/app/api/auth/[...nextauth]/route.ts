@@ -81,6 +81,7 @@ export const authOptions: NextAuthOptions = {
             ? userProfile.roles[0]
             : userProfile.roles?.[0]?.name
 
+          const roleString = String(rawRole || '').toLowerCase()
           const roleMap: Record<string, string> = {
             owner: 'ADMIN',
             admin: 'ADMIN',
@@ -88,9 +89,13 @@ export const authOptions: NextAuthOptions = {
             manager: 'MANAGER',
             sales: 'SALES',
             user: 'SALES',
+            sale_admin: 'SALE_ADMIN',
+            sale_lead: 'SALE_LEAD',
+            ketoan: 'ACCOUNTANT',
+            accountant: 'ACCOUNTANT'
           }
 
-          const normalizedRole = roleMap[String(rawRole || '').toLowerCase()] || 'SALES'
+          const normalizedRole = roleMap[roleString] || roleString.toUpperCase()
 
           return {
             id: userProfile.id,

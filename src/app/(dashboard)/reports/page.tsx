@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { useSession } from 'next-auth/react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import { Download } from 'lucide-react'
 import { formatCurrency, OPPORTUNITY_STAGE_LABELS, CUSTOMER_SOURCE_LABELS } from '@/lib/utils'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899']
@@ -25,7 +26,14 @@ export default function ReportsPage() {
       url += `&teamId=${session.user.teamId}`
     }
     apiClient.get(url).then(d => {
-      const list = Array.isArray(d) ? d : (d?.data || []);
+      let list = Array.isArray(d) ? d : (d?.data || []);
+      list = list.filter((u: any) => {
+        if (!u.roles || u.roles.length === 0) return false;
+        return u.roles.some((r: string) => {
+          const lower = r.toLowerCase();
+          return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
+        });
+      });
       setUsers(list);
     }).catch(() => {})
   }, [session])
@@ -54,6 +62,48 @@ export default function ReportsPage() {
     ...(session?.user?.role !== 'SALES' ? [{ key: 'users', label: 'Nhân viên' }] : []),
   ]
 
+  const handleExportCSV = () => {
+    if (!data) return;
+
+    let csvContent = '\uFEFF'; // BOM cho Excel để đọc tiếng Việt
+    let filename = `bao-cao.csv`;
+
+    if (activeReport === 'receivables') {
+      filename = `bao-cao-cong-no-${new Date().toISOString().split('T')[0]}.csv`;
+      csvContent += 'Mã ĐH,Khách hàng,Tổng (VNĐ),Đã thanh toán (VNĐ),Còn lại (VNĐ),Nhân viên phụ trách\n';
+      const items = ((data as { data: Array<{ code: string; customer: string; total: number; paid: number; remaining: number; assignedTo: string }> }).data || []);
+      items.forEach(item => {
+        csvContent += `"${item.code}","${item.customer}","${item.total}","${item.paid}","${item.remaining}","${item.assignedTo}"\n`;
+      });
+    } else if (activeReport === 'users') {
+      filename = `hieu-suat-nhan-vien-${new Date().toISOString().split('T')[0]}.csv`;
+      csvContent += 'Nhân viên,Doanh thu (VNĐ),Khách hàng mới\n';
+      const items = ((data as { data: Array<{ name: string; revenue: number; newCustomers: number }> }).data || []);
+      items.forEach(item => {
+        csvContent += `"${item.name}","${item.revenue}","${item.newCustomers}"\n`;
+      });
+    } else if (activeReport === 'revenue') {
+      filename = `doanh-thu-${new Date().toISOString().split('T')[0]}.csv`;
+      csvContent += 'Tháng,Doanh thu (VNĐ),Đã thu (VNĐ)\n';
+      const items = ((data as { data: Array<{ month: string; revenue: number; paid: number }> }).data || []);
+      items.forEach(item => {
+        csvContent += `"${item.month}","${item.revenue}","${item.paid}"\n`;
+      });
+    } else {
+      alert('Chưa hỗ trợ xuất Excel cho loại báo cáo này. Vui lòng chọn Công nợ, Nhân viên hoặc Doanh thu.');
+      return;
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -65,10 +115,17 @@ export default function ReportsPage() {
           {session?.user?.role !== 'SALES' && (
             <select value={userIdFilter} onChange={e => setUserIdFilter(e.target.value)} className="border border-surface-300 rounded-lg px-3 py-2 text-sm bg-white min-w-[150px]">
               <option value="">Tất cả nhân viên</option>
-              {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+              {users.map((u: any) => <option key={u.id} value={u.id}>{u.fullName || u.name}</option>)}
             </select>
           )}
           <input type="month" value={monthFilter} onChange={e => setMonthFilter(e.target.value)} className="border border-surface-300 rounded-lg px-3 py-2 text-sm bg-white" />
+          <button 
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Download size={16} />
+            <span className="hidden sm:inline">Xuất Excel</span>
+          </button>
         </div>
       </div>
 
@@ -135,6 +192,32 @@ export default function ReportsPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
+
+                {((data as any)?.productsData?.length > 0) && (
+                  <div className="mt-8">
+                    <h3 className="font-semibold mb-4 text-surface-800">Nhu cầu hàng hóa theo cơ hội (Pipeline)</h3>
+                    <div className="bg-white rounded-xl overflow-hidden border border-surface-200 shadow-sm">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-surface-50 border-b border-surface-200 text-surface-600">
+                          <tr>
+                            <th className="py-3 px-4 font-medium whitespace-nowrap">Mã hàng</th>
+                            <th className="py-3 px-4 font-medium w-full">Tên sản phẩm</th>
+                            <th className="py-3 px-4 font-medium text-right whitespace-nowrap">Tổng SL quan tâm</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-surface-200">
+                          {((data as any).productsData).map((p: any) => (
+                            <tr key={p.code} className="hover:bg-surface-50 transition-colors">
+                              <td className="py-3 px-4 font-mono font-medium text-brand-600">{p.code}</td>
+                              <td className="py-3 px-4">{p.name}</td>
+                              <td className="py-3 px-4 text-right font-semibold text-surface-900">{p.quantity.toLocaleString('vi-VN')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

@@ -52,7 +52,17 @@ export default function TripsPage() {
     if (session?.user?.role === 'SALE_LEAD' && session?.user?.teamId) {
       url += `&teamId=${session.user.teamId}`
     }
-    apiClient.get(url).then(d => setUsers(extractArray(d))).catch(() => {})
+    apiClient.get(url).then(d => {
+      const allUsers = extractArray(d);
+      const filteredUsers = allUsers.filter((u: any) => {
+        if (!u.roles || u.roles.length === 0) return false;
+        return u.roles.some((r: string) => {
+          const lower = r.toLowerCase();
+          return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
+        });
+      });
+      setUsers(filteredUsers);
+    }).catch(() => {})
   }, [session])
 
   const fetchTrips = useCallback(async () => {

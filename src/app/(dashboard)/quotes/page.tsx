@@ -42,7 +42,7 @@ export default function QuotesPage() {
     try {
       const data = await apiClient.get(`/quotes?${params}`)
       setQuotes(data.data || [])
-      setTotal(data.meta?.totalItems || 0)
+      setTotal(data.meta?.total || data.meta?.totalItems || 0)
       setTotalPages(data.meta?.totalPages || 1)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -50,7 +50,24 @@ export default function QuotesPage() {
 
   useEffect(() => { fetchQuotes() }, [fetchQuotes])
   useEffect(() => {
-    apiClient.get('/users?limit=100').then(d => setUsers(d.data || [])).catch(() => {})
+    apiClient.get('/users?limit=100').then(d => {
+      const extractArray = (res: any) => {
+        if (!res) return [];
+        if (Array.isArray(res)) return res;
+        if (res.data && Array.isArray(res.data)) return res.data;
+        if (res.items && Array.isArray(res.items)) return res.items;
+        return [];
+      };
+      const allUsers = extractArray(d);
+      const filteredUsers = allUsers.filter((u: any) => {
+        if (!u.roles || u.roles.length === 0) return false;
+        return u.roles.some((r: string) => {
+          const lower = r.toLowerCase();
+          return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
+        });
+      });
+      setUsers(filteredUsers);
+    }).catch(() => {})
   }, [])
 
   const handleClone = async (id: string, e: React.MouseEvent) => {
@@ -80,7 +97,7 @@ export default function QuotesPage() {
         </div>
         <select value={assignedToIdFilter} onChange={e => { setAssignedToIdFilter(e.target.value); setPage(1) }} className="border border-surface-200 rounded-lg px-3 py-2 text-sm min-w-[140px]">
           <option value="">Tất cả nhân viên</option>
-          {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          {users.map((u: any) => <option key={u.id} value={u.id}>{u.fullName || u.name || 'Unknown'}</option>)}
         </select>
         <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }} className="border border-surface-200 rounded-lg px-3 py-2 text-sm min-w-[140px]">
           <option value="">Trạng thái</option>

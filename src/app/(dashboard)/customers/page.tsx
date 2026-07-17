@@ -73,7 +73,7 @@ export default function CustomersPage() {
     try {
       const data = await apiClient.get(`/customers?${params}`)
       setCustomers(extractArray(data))
-      setTotal(data.meta?.totalItems || 0)
+      setTotal(data.meta?.total || data.meta?.totalItems || 0)
       setTotalPages(data.meta?.totalPages || 1)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -88,8 +88,11 @@ export default function CustomersPage() {
     apiClient.get(url).then(d => {
       const list = Array.isArray(d.data) ? d.data : [];
       const salesAndManagers = list.filter((u: any) => {
-        if (!u.roles) return true; // if roles not loaded, keep them just in case
-        return u.roles.some((r: string) => ['sale', 'sales', 'manager', 'admin', 'owner', 'sale_admin', 'sale_lead'].includes(r.toLowerCase()));
+        if (!u.roles || u.roles.length === 0) return false;
+        return u.roles.some((r: string) => {
+          const lower = r.toLowerCase();
+          return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
+        });
       });
       setUsers(salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
     }).catch(() => {})
@@ -351,8 +354,8 @@ export default function CustomersPage() {
               <input value={form.contactPerson} onChange={e => setForm({...form, contactPerson: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Số điện thoại</label>
-              <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-surface-700 mb-1">Số điện thoại *</label>
+              <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

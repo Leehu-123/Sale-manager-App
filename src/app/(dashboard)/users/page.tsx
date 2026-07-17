@@ -123,6 +123,7 @@ export default function UsersPage() {
       fullName: form.name,
       phone: form.phone,
       roleNames: [mappedRole],
+      roleScope: 'sale',
       teamId: form.teamId || null,
       isActive: form.status === 'ACTIVE'
     }

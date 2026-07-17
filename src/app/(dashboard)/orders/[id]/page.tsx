@@ -77,7 +77,7 @@ export default function OrderDetailPage() {
           {order.status === 'NEW' && <button onClick={() => handleStatusChange('CONFIRMED')} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm">Xác nhận đơn hàng</button>}
           {order.status === 'CONFIRMED' && <button onClick={() => handleStatusChange('DELIVERING')} className="px-3 py-2 bg-amber-500 text-white rounded-lg text-sm">Vận chuyển đơn hàng</button>}
           {order.status === 'DELIVERING' && <button onClick={() => handleStatusChange('DEBT_TRACKING')} className="px-3 py-2 bg-orange-500 text-white rounded-lg text-sm">Theo dõi công nợ</button>}
-          {order.status === 'DEBT_TRACKING' && order.remainingAmount <= 0 && <button onClick={() => handleStatusChange('COMPLETED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Kết thúc đơn hàng</button>}
+          {order.status === 'DEBT_TRACKING' && Math.round(order.remainingAmount) <= 0 && <button onClick={() => handleStatusChange('COMPLETED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Kết thúc đơn hàng</button>}
           <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
             <DollarSign size={16} /> Thêm thanh toán
           </button>

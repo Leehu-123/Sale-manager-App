@@ -32,15 +32,15 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Tổng quan', icon: LayoutDashboard, href: '/' },
-  { label: 'Khách hàng', icon: Users, href: '/customers' },
-  { label: 'Pipeline', icon: GitBranch, href: '/pipeline' },
-  { label: 'Sản phẩm', icon: Package, href: '/products' },
-  { label: 'Báo giá', icon: FileText, href: '/quotes' },
+  { label: 'Khách hàng', icon: Users, href: '/customers', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
+  { label: 'Pipeline', icon: GitBranch, href: '/pipeline', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
+  { label: 'Sản phẩm', icon: Package, href: '/products', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
+  { label: 'Báo giá', icon: FileText, href: '/quotes', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
   { label: 'Đơn hàng', icon: ShoppingCart, href: '/orders' },
-  { label: 'Công việc', icon: CheckSquare, href: '/tasks' },
-  { label: 'Công tác', icon: Map, href: '/trips' },
+  { label: 'Công việc', icon: CheckSquare, href: '/tasks', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
+  { label: 'Công tác', icon: Map, href: '/trips', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
   { label: 'Báo cáo', icon: BarChart3, href: '/reports' },
-  { label: 'Nhân viên', icon: UserCog, href: '/users', roles: ['ADMIN', 'MANAGER'] },
+  { label: 'Nhân viên', icon: UserCog, href: '/users', roles: ['ADMIN', 'SALE_ADMIN'] },
   { label: 'Cài đặt', icon: Settings, href: '/settings', roles: ['ADMIN'] },
 ]
 

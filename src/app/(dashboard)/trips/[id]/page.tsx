@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { ArrowLeft, MapPin, Calendar, DollarSign, Upload, CheckCircle, XCircle, Plus } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, DollarSign, Upload, CheckCircle, XCircle, Plus, X } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Modal } from '@/components/ui/Modal'
 
@@ -56,6 +56,9 @@ export default function TripDetailPage() {
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Lightbox state
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null)
 
   // Finish Form state
   const [finishForm, setFinishForm] = useState({ 
@@ -129,7 +132,10 @@ export default function TripDetailPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setImages(prev => [...prev, data.url])
+        const imageUrl = data.data ? data.data.url : data.url
+        if (imageUrl) {
+          setImages(prev => [...prev, imageUrl])
+        }
       } else {
         const errData = await res.json().catch(() => ({}))
         alert('Lỗi tải ảnh: ' + (errData.message || `HTTP ${res.status}`))
@@ -174,8 +180,9 @@ export default function TripDetailPage() {
     setSaving(true)
     try {
       // Calculate totals
-      const totalNew = trip?.reports.reduce((s, r) => s + r.newClients, 0) || 0
-      const totalOld = trip?.reports.reduce((s, r) => s + r.oldClients, 0) || 0
+      const safeReports = trip?.reports || []
+      const totalNew = safeReports.reduce((s, r) => s + r.newClients, 0) || 0
+      const totalOld = safeReports.reduce((s, r) => s + r.oldClients, 0) || 0
 
       const transport = parseFloat(finishForm.actualTransportCost) || 0
       const food = parseFloat(finishForm.actualFoodCost) || 0
@@ -184,7 +191,6 @@ export default function TripDetailPage() {
       const totalCost = transport + food + accom + enter
 
       const res = await apiClient.put(`/business-trips/${params.id}`, {
-        status: 'COMPLETED',
         actualTransportCost: transport,
         actualFoodCost: food,
         actualAccommodationCost: accom,
@@ -195,6 +201,7 @@ export default function TripDetailPage() {
         totalOldClients: totalOld,
       })
       if (res) {
+        await apiClient.post(`/business-trips/${params.id}/complete`, {})
         setShowFinishModal(false)
         fetchTrip()
       }
@@ -293,11 +300,11 @@ export default function TripDetailPage() {
           <h3 className="font-semibold text-surface-900">Nhật ký công tác</h3>
         </div>
         <div className="p-4 sm:p-6 space-y-8">
-          {trip.reports.length === 0 ? (
+          {(!trip.reports || trip.reports.length === 0) ? (
             <div className="text-center py-8 text-surface-400">Chưa có báo cáo ngày nào</div>
           ) : (
             <div className="relative border-l-2 border-surface-200 ml-3 md:ml-4 space-y-8">
-              {trip.reports.map(report => {
+              {(trip.reports || []).map(report => {
                 const imagesArr = report.images ? JSON.parse(report.images) : []
                 return (
                   <div key={report.id} className="relative pl-6 sm:pl-8">
@@ -319,9 +326,13 @@ export default function TripDetailPage() {
                       </div>
                       {imagesArr.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {imagesArr.map((img: string, idx: number) => (
-                            <img key={idx} src={img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img} alt="Báo cáo" className="h-20 w-20 object-cover rounded-lg border border-surface-200" />
-                          ))}
+                          {(Array.isArray(imagesArr) ? imagesArr : []).map((img: any, idx: number) => {
+                            if (!img || typeof img !== 'string') return null;
+                            const fullSrc = img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img;
+                            return (
+                              <img key={idx} src={fullSrc} alt="Báo cáo" className="h-20 w-20 object-cover rounded-lg border border-surface-200 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setLightboxImg(fullSrc)} />
+                            )
+                          })}
                         </div>
                       )}
                     </div>
@@ -360,12 +371,15 @@ export default function TripDetailPage() {
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Hình ảnh đính kèm</label>
             <div className="flex flex-wrap gap-2">
-              {images.map((img, idx) => (
+              {images.map((img, idx) => {
+                if (!img || typeof img !== 'string') return null;
+                return (
                 <div key={idx} className="relative group">
                   <img src={img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img} alt="preview" className="h-16 w-16 object-cover rounded-lg border border-surface-200" />
                   <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><XCircle size={14}/></button>
                 </div>
-              ))}
+                )
+              })}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -405,6 +419,16 @@ export default function TripDetailPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Image Lightbox */}
+      {lightboxImg && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setLightboxImg(null)}>
+          <button onClick={() => setLightboxImg(null)} className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors z-10">
+            <X size={24} />
+          </button>
+          <img src={lightboxImg} alt="Xem chi tiết" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   )
 }

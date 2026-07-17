@@ -12,6 +12,8 @@ interface Opportunity {
   probability: number; expectedCloseDate?: string; projectName?: string
   customer: { id: string; name: string; code: string }
   assignedTo: { id: string; name: string }
+  products?: string
+  notes?: string
 }
 
 const STAGES = ['NEW_LEAD', 'CONTACTED', 'SURVEYED', 'CONSULTING', 'QUOTE_SENT', 'NEGOTIATING', 'CONTRACT_PENDING', 'WON', 'LOST']
@@ -28,11 +30,14 @@ export default function PipelinePage() {
   const [pendingStageChange, setPendingStageChange] = useState<{ id: string; stage: string } | null>(null)
   const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([])
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [productsList, setProductsList] = useState<Array<{ id: string; name: string; code: string }>>([])
 
-  const [form, setForm] = useState({
+  const defaultForm = {
     name: '', customerId: '', assignedToId: '', projectName: '', estimatedValue: '',
-    probability: '50', products: [] as string[], notes: '',
-  })
+    probability: '50', products: [] as Array<{ productId: string, quantity: number }>, notes: '', stage: 'NEW_LEAD', lossReason: ''
+  }
+  const [form, setForm] = useState(defaultForm)
 
   const [assignedToId, setAssignedToId] = useState('')
   const [users, setUsers] = useState<Array<{ id: string; name: string }>>([])
@@ -80,6 +85,9 @@ export default function PipelinePage() {
 
   useEffect(() => { fetchOpportunities() }, [fetchOpportunities])
   useEffect(() => {
+    apiClient.get('/products?page=1&limit=100').then(d => {
+      setProductsList(extractArray(d));
+    }).catch(() => {})
     apiClient.get('/customers?page=1&limit=100').then(d => {
       setCustomers(extractArray(d));
     }).catch(() => {})
@@ -90,8 +98,11 @@ export default function PipelinePage() {
     apiClient.get(url).then(d => {
       const list = extractArray(d);
       const salesAndManagers = list.filter((u: any) => {
-        if (!u.roles) return true;
-        return u.roles.some((r: string) => ['sale', 'sales', 'manager', 'admin', 'owner', 'sale_admin', 'sale_lead'].includes(r.toLowerCase()));
+        if (!u.roles || u.roles.length === 0) return false;
+        return u.roles.some((r: string) => {
+          const lower = r.toLowerCase();
+          return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
+        });
       });
       setUsers(salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
     }).catch(() => {})
@@ -121,7 +132,29 @@ export default function PipelinePage() {
     } catch { alert('Có lỗi xảy ra') }
   }
 
-  const handleAddOpportunity = async (e: React.FormEvent) => {
+  const openEditModal = (opp: Opportunity) => {
+    let parsedProducts = []
+    if (opp.products) {
+      try { parsedProducts = JSON.parse(opp.products) } catch (e) {}
+    }
+
+    setForm({
+      name: opp.name,
+      customerId: opp.customer?.id || '',
+      assignedToId: opp.assignedTo?.id || '',
+      projectName: opp.projectName || '',
+      estimatedValue: opp.estimatedValue.toString(),
+      probability: opp.probability.toString(),
+      products: parsedProducts,
+      notes: opp.notes || '',
+      stage: opp.stage || 'NEW_LEAD',
+      lossReason: ''
+    })
+    setEditingId(opp.id)
+    setShowAddModal(true)
+  }
+
+  const handleSaveOpportunity = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     try {
@@ -130,14 +163,23 @@ export default function PipelinePage() {
         customerId: form.customerId,
         assignedToId: form.assignedToId,
         probability: parseInt(form.probability) || 50,
+        stage: form.stage
       }
       if (form.projectName) payload.projectName = form.projectName;
       if (form.estimatedValue) payload.estimatedValue = parseFloat(form.estimatedValue);
       if (form.notes) payload.notes = form.notes;
+      if (form.stage === 'LOST' && form.lossReason) payload.lossReason = form.lossReason;
+      
+      payload.products = JSON.stringify(form.products)
 
-      await apiClient.post('/opportunities', payload)
+      if (editingId) {
+        await apiClient.put(`/opportunities/${editingId}`, payload)
+      } else {
+        await apiClient.post('/opportunities', payload)
+      }
       setShowAddModal(false)
-      setForm({ name: '', customerId: '', assignedToId: '', projectName: '', estimatedValue: '', probability: '50', products: [], notes: '' })
+      setForm(defaultForm)
+      setEditingId(null)
       fetchOpportunities()
     } catch { alert('Có lỗi xảy ra') }
     finally { setSaving(false) }
@@ -163,7 +205,7 @@ export default function PipelinePage() {
             <button onClick={() => setViewMode('kanban')} className={`p-2 rounded-md ${viewMode === 'kanban' ? 'bg-white shadow-sm' : ''}`}><LayoutGrid size={16} /></button>
             <button onClick={() => setViewMode('table')} className={`p-2 rounded-md ${viewMode === 'table' ? 'bg-white shadow-sm' : ''}`}><List size={16} /></button>
           </div>
-          <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
+          <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowAddModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
             <Plus size={16} /> Thêm cơ hội
           </button>
         </div>
@@ -218,7 +260,8 @@ export default function PipelinePage() {
                       key={opp.id}
                       draggable
                       onDragStart={() => setDraggedId(opp.id)}
-                      className="bg-white rounded-lg p-3 shadow-sm border border-surface-100 hover:shadow-md transition-all cursor-grab active:cursor-grabbing hover:border-brand-200"
+                      onClick={() => openEditModal(opp)}
+                      className="bg-white rounded-lg p-3 shadow-sm border border-surface-100 hover:shadow-md transition-all cursor-pointer active:cursor-grabbing hover:border-brand-200"
                     >
                       <p className="text-sm font-medium text-surface-900 truncate">{opp.name}</p>
                       <p className="text-xs text-surface-500 mt-1 truncate">{opp.customer.name}</p>
@@ -230,6 +273,17 @@ export default function PipelinePage() {
                         <span className="text-xs text-surface-400">{opp.assignedTo?.name}</span>
                         <span className="text-xs text-surface-400">{opp.code}</span>
                       </div>
+                      {opp.products && (() => {
+                        try {
+                          const p = JSON.parse(opp.products)
+                          if (!p || p.length === 0) return null;
+                          return (
+                            <div className="mt-2 text-xs font-medium text-brand-600 bg-brand-50 p-1.5 rounded truncate">
+                              🛒 {p.length} SP quan tâm (VD: {productsList.find(x => x.id === p[0].productId)?.code || 'SP'})
+                            </div>
+                          )
+                        } catch { return null }
+                      })()}
                     </div>
                   ))
                 )}
@@ -271,18 +325,18 @@ export default function PipelinePage() {
       <Modal 
         isOpen={showAddModal} 
         onClose={() => setShowAddModal(false)} 
-        title="Thêm cơ hội bán hàng" 
+        title={editingId ? "Cập nhật cơ hội" : "Thêm cơ hội bán hàng"} 
         size="lg"
         footer={
           <>
             <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm">Hủy</button>
             <button type="submit" form="opp-form" disabled={saving} className="flex-1 py-2 btn-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">
-              {saving ? 'Đang lưu...' : 'Thêm cơ hội'}
+              {saving ? 'Đang lưu...' : 'Lưu lại'}
             </button>
           </>
         }
       >
-        <form id="opp-form" onSubmit={handleAddOpportunity} className="space-y-4">
+        <form id="opp-form" onSubmit={handleSaveOpportunity} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Tên cơ hội *</label>
             <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder="VD: Cung cấp kính cường lực cho tòa nhà ABC" />
@@ -301,6 +355,22 @@ export default function PipelinePage() {
               {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           </div>
+          {editingId && (
+            <div className="grid grid-cols-2 gap-4 border-b border-surface-200 pb-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-surface-700 mb-1">Giai đoạn</label>
+                <select value={form.stage} onChange={e => setForm({...form, stage: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
+                  {STAGES.map(s => <option key={s} value={s}>{OPPORTUNITY_STAGE_LABELS[s]}</option>)}
+                </select>
+              </div>
+              {form.stage === 'LOST' && (
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 mb-1">Lý do thất bại</label>
+                  <input value={form.lossReason} onChange={e => setForm({...form, lossReason: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" placeholder="VD: Khách chê giá cao..." required />
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-surface-700 mb-1">Giá trị dự kiến (VNĐ)</label>
@@ -311,6 +381,54 @@ export default function PipelinePage() {
               <input value={form.probability} onChange={e => setForm({...form, probability: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" type="number" min="0" max="100" />
             </div>
           </div>
+          
+          <div className="border border-surface-200 rounded-lg p-3 bg-surface-50 space-y-3 mt-4 mb-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-700">Sản phẩm khách hàng quan tâm</label>
+              <button 
+                type="button" 
+                onClick={() => setForm({...form, products: [...form.products, { productId: '', quantity: 1 }]})}
+                className="text-xs bg-white border border-surface-300 px-2 py-1 rounded text-brand-600 hover:bg-brand-50"
+              >
+                + Thêm SP
+              </button>
+            </div>
+            {form.products.map((item, idx) => (
+              <div key={idx} className="flex gap-2 items-center">
+                <select 
+                  value={item.productId} 
+                  onChange={e => {
+                    const newP = [...form.products];
+                    newP[idx].productId = e.target.value;
+                    setForm({...form, products: newP})
+                  }} 
+                  className="flex-1 border border-surface-300 rounded px-2 py-1.5 text-sm"
+                >
+                  <option value="">Chọn sản phẩm</option>
+                  {productsList.map(p => <option key={p.id} value={p.id}>[{p.code}] {p.name}</option>)}
+                </select>
+                <input 
+                  type="number" min="1" placeholder="SL" value={item.quantity} 
+                  onChange={e => {
+                    const newP = [...form.products];
+                    newP[idx].quantity = parseInt(e.target.value) || 1;
+                    setForm({...form, products: newP})
+                  }}
+                  className="w-20 border border-surface-300 rounded px-2 py-1.5 text-sm"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    const newP = form.products.filter((_, i) => i !== idx);
+                    setForm({...form, products: newP});
+                  }}
+                  className="text-red-500 hover:text-red-700 p-1 font-bold"
+                >✕</button>
+              </div>
+            ))}
+            {form.products.length === 0 && <p className="text-xs text-surface-500 italic">Chưa có sản phẩm nào. Bấm "+ Thêm SP" để thêm.</p>}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Công trình / Dự án</label>
             <input value={form.projectName} onChange={e => setForm({...form, projectName: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />

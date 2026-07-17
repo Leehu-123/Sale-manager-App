@@ -63,7 +63,14 @@ export default function TasksPage() {
     apiClient.get('/customers?limit=100').then(d => setCustomers(extractArray(d))).catch(() => {})
     apiClient.get('/users?limit=100').then(d => {
       const list = extractArray(d);
-      setUsers(list.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
+      const filtered = list.filter((u: any) => {
+        if (!u.roles || u.roles.length === 0) return false;
+        return u.roles.some((r: string) => {
+          const lower = r.toLowerCase();
+          return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
+        });
+      });
+      setUsers(filtered.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
     }).catch(() => {})
   }, [])
 

@@ -165,8 +165,8 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis type="number" tick={{ fontSize: 12 }} />
               <YAxis dataKey="stageName" type="category" tick={{ fontSize: 11 }} width={120} />
-              <Tooltip formatter={(value: any) => formatCurrency(value as number)} />
-              <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="Giá trị" />
+              <Tooltip formatter={(value: any) => formatNumber(value as number)} />
+              <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="Số lượng" />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -42,6 +42,7 @@ export default function QuoteDetailPage() {
   const [vatRate, setVatRate] = useState(10)
   const [terms, setTerms] = useState('')
   const [notes, setNotes] = useState('')
+  const [settings, setSettings] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const extractArray = (res: any) => {
@@ -57,7 +58,8 @@ export default function QuoteDetailPage() {
     Promise.all([
       apiClient.get(`/quotes/${params.id}`),
       apiClient.get('/products?page=1&limit=100'),
-    ]).then(([quoteRes, productsData]) => {
+      fetch('/api/settings').then(res => res.json()).catch(() => ({}))
+    ]).then(([quoteRes, productsData, settingsData]) => {
       const quoteData = quoteRes.data || quoteRes;
       setQuote(quoteData)
       setItems(quoteData.items || [])
@@ -65,9 +67,10 @@ export default function QuoteDetailPage() {
       setInstallationCost(quoteData.installationCost || 0)
       setDiscount(quoteData.discount || 0)
       setVatRate(quoteData.vatRate || 10)
-      setTerms(quoteData.terms || '')
+      setTerms(quoteData.terms || settingsData?.data?.default_quote_terms || settingsData?.default_quote_terms || '')
       setNotes(quoteData.notes || '')
       setProducts(extractArray(productsData))
+      setSettings(settingsData?.data || settingsData || {})
     }).catch(console.error).finally(() => setLoading(false))
   }, [params.id])
 
@@ -165,10 +168,13 @@ export default function QuoteDetailPage() {
     if (!confirm('Bạn có chắc muốn tạo đơn hàng từ báo giá này?')) return
     setSaving(true)
     try {
+      const customerRes = await apiClient.get(`/customers/${quote?.customer.id}`).catch(() => ({ data: {} }));
+      const customerAssignedToId = customerRes?.data?.assignedToId || customerRes?.assignedToId;
+
       const order = await apiClient.post('/orders', {
         quoteId: quote?.id,
         customerId: quote?.customer.id,
-        assignedToId: (session?.user as any)?.id,
+        assignedToId: customerAssignedToId || (session?.user as any)?.id,
         items: getCleanItems(),
         discount: quote?.discount || 0,
         vatRate: quote?.vatRate || 10,
@@ -184,8 +190,8 @@ export default function QuoteDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/quotes')} className="p-2 hover:bg-surface-100 rounded-lg print:hidden"><ArrowLeft size={20} /></button>
+        <div className="flex items-center gap-4 print:hidden">
+          <button onClick={() => router.push('/quotes')} className="p-2 hover:bg-surface-100 rounded-lg"><ArrowLeft size={20} /></button>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-surface-900">{quote.code}</h1>
@@ -214,6 +220,27 @@ export default function QuoteDetailPage() {
         </div>
       </div>
 
+      {/* Print Company Header */}
+      <div className="hidden print:block border-b-2 border-brand-500 pb-4 mb-6">
+        <div className="flex justify-between items-start">
+          <div className="max-w-[60%]">
+            <h2 className="text-xl font-bold uppercase text-brand-700">{settings.company_name || 'CÔNG TY'}</h2>
+            {settings.company_address && <p className="text-sm mt-1">ĐC: {settings.company_address}</p>}
+            <p className="text-sm">
+              {settings.company_phone && `ĐT: ${settings.company_phone}`}
+              {settings.company_phone && settings.company_tax_id && ' - '}
+              {settings.company_tax_id && `MST: ${settings.company_tax_id}`}
+            </p>
+            {settings.company_website && <p className="text-sm">Website: {settings.company_website}</p>}
+          </div>
+          <div className="text-right">
+            <h1 className="text-2xl font-bold text-brand-700 uppercase">BÁO GIÁ</h1>
+            <p className="text-sm font-medium mt-1">Số: {quote.code}</p>
+            <p className="text-sm">Ngày: {new Date(quote.createdAt).toLocaleDateString('vi-VN')}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Customer Info */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -224,16 +251,17 @@ export default function QuoteDetailPage() {
         </div>
       </div>
 
-      {/* Items Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b flex items-center justify-between">
+      {/* Items */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+        <div className="p-4 border-b flex justify-between items-center print:hidden">
           <h3 className="font-semibold">Hạng mục báo giá</h3>
-          <button onClick={addItem} className="flex items-center gap-1 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm hover:bg-brand-100">
-            <Plus size={14} /> Thêm dòng
-          </button>
+          {quote.status === 'DRAFT' && <button onClick={addItem} className="text-sm flex items-center gap-1 text-brand-600 hover:text-brand-700 font-medium"><Plus size={16} /> Thêm dòng</button>}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[1000px]">
+        <div className="hidden print:block p-4 border-b border-brand-200">
+          <h3 className="font-bold text-lg text-brand-800">Hạng mục báo giá</h3>
+        </div>
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full text-sm min-w-[1000px] print:min-w-0">
             <thead className="bg-surface-50">
               <tr>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-8">#</th>
