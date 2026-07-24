@@ -94,13 +94,21 @@ export default function CustomersPage() {
           return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
         });
       });
-      setUsers(salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
-    }).catch(() => {})
+      let parsedUsers = salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name }));
+      if (parsedUsers.length === 0 && session?.user?.role === 'SALES' && session?.user?.id) {
+        parsedUsers = [{ id: session.user.id, name: session.user.name || 'Tôi' }];
+      }
+      setUsers(parsedUsers);
+    }).catch(() => {
+      if (session?.user?.role === 'SALES' && session?.user?.id) {
+        setUsers([{ id: session.user.id, name: session.user.name || 'Tôi' }]);
+      }
+    })
   }, [session])
 
   const resetForm = () => {
     setEditId(null);
-    setForm({ type: 'INDIVIDUAL', name: '', contactPerson: '', phone: '', email: '', address: '', province: '', projectName: '', source: 'WEBSITE', status: 'NEW', productNeeds: [], estimatedArea: '', estimatedBudget: '', notes: '', assignedToId: '' })
+    setForm({ type: 'INDIVIDUAL', name: '', contactPerson: '', phone: '', email: '', address: '', province: '', projectName: '', source: 'WEBSITE', status: 'NEW', productNeeds: [], estimatedArea: '', estimatedBudget: '', notes: '', assignedToId: session?.user?.id || '' })
   }
 
   const handleEditClick = (c: Customer, e: React.MouseEvent) => {

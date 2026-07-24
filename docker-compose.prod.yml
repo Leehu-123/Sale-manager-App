@@ -6,6 +6,7 @@ services:
       args:
         - NEXT_PUBLIC_API_URL=https://coreapi.ldhuy.name.vn
     container_name: sale_manager_app
+    image: ghcr.io/leehu-123/sale-manager-app:latest
     restart: always
     volumes:
       - ./data:/app/data

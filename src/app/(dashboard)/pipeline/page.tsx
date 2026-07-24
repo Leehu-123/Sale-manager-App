@@ -88,7 +88,13 @@ export default function PipelinePage() {
     apiClient.get('/products?page=1&limit=100').then(d => {
       setProductsList(extractArray(d));
     }).catch(() => {})
-    apiClient.get('/customers?page=1&limit=100').then(d => {
+    let customersUrl = '/customers?page=1&limit=100'
+    if (session?.user?.role === 'SALES') {
+      customersUrl += `&assignedToId=${session.user.id}`
+    } else if (session?.user?.role === 'SALE_LEAD' && session?.user?.teamId) {
+      customersUrl += `&teamId=${session.user.teamId}`
+    }
+    apiClient.get(customersUrl).then(d => {
       setCustomers(extractArray(d));
     }).catch(() => {})
     let url = '/users?page=1&limit=100'
@@ -104,8 +110,16 @@ export default function PipelinePage() {
           return lower.includes('sale') || lower.includes('admin') || lower.includes('manager') || lower.includes('owner') || lower.includes('quản lý');
         });
       });
-      setUsers(salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name })));
-    }).catch(() => {})
+      let parsedUsers = salesAndManagers.map((u: any) => ({ id: u.id, name: u.fullName || u.name }));
+      if (parsedUsers.length === 0 && session?.user?.role === 'SALES' && session?.user?.id) {
+        parsedUsers = [{ id: session.user.id, name: session.user.name || 'Tôi' }];
+      }
+      setUsers(parsedUsers);
+    }).catch(() => {
+      if (session?.user?.role === 'SALES' && session?.user?.id) {
+        setUsers([{ id: session.user.id, name: session.user.name || 'Tôi' }]);
+      }
+    })
   }, [session])
 
   const handleStageChange = async (id: string, newStage: string) => {
@@ -205,7 +219,7 @@ export default function PipelinePage() {
             <button onClick={() => setViewMode('kanban')} className={`p-2 rounded-md ${viewMode === 'kanban' ? 'bg-white shadow-sm' : ''}`}><LayoutGrid size={16} /></button>
             <button onClick={() => setViewMode('table')} className={`p-2 rounded-md ${viewMode === 'table' ? 'bg-white shadow-sm' : ''}`}><List size={16} /></button>
           </div>
-          <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowAddModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
+          <button onClick={() => { setEditingId(null); setForm({ ...defaultForm, assignedToId: session?.user?.id || '' }); setShowAddModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
             <Plus size={16} /> Thêm cơ hội
           </button>
         </div>
