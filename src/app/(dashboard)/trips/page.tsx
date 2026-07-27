@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { apiClient } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
-import { Search, Map, Plus, ChevronRight } from 'lucide-react'
+import { Search, Map, Plus, ChevronRight, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 interface Trip {
@@ -39,6 +39,7 @@ export default function TripsPage() {
   const [userIdFilter, setUserIdFilter] = useState('')
 
   const { data: session } = useSession()
+  const isAdmin = ['ADMIN', 'SALE_ADMIN'].includes(session?.user?.role || '')
 
   useEffect(() => {
     const extractArray = (res: any) => {
@@ -129,13 +130,14 @@ export default function TripsPage() {
                 <th className="p-4 text-left font-medium text-surface-500 whitespace-nowrap">Thời gian</th>
                 <th className="p-4 text-left font-medium text-surface-500 whitespace-nowrap">Trạng thái</th>
                 <th className="p-4 text-center font-medium text-surface-500 whitespace-nowrap">Báo cáo</th>
+                {isAdmin && <th className="p-4 text-right font-medium text-surface-500 whitespace-nowrap">Thao tác</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-100">
               {loading ? (
-                [...Array(3)].map((_, i) => <tr key={i}>{[...Array(6)].map((_, j) => <td key={j} className="p-4"><div className="h-4 bg-surface-100 rounded animate-pulse" /></td>)}</tr>)
+                [...Array(3)].map((_, i) => <tr key={i}>{[...Array(isAdmin ? 7 : 6)].map((_, j) => <td key={j} className="p-4"><div className="h-4 bg-surface-100 rounded animate-pulse" /></td>)}</tr>)
               ) : trips.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-surface-400"><Map size={48} className="mx-auto mb-3 text-surface-300" /><p>Chưa có dữ liệu công tác</p></td></tr>
+                <tr><td colSpan={isAdmin ? 7 : 6} className="text-center py-12 text-surface-400"><Map size={48} className="mx-auto mb-3 text-surface-300" /><p>Chưa có dữ liệu công tác</p></td></tr>
               ) : (
                 trips.map(trip => (
                   <tr key={trip.id} onClick={() => router.push(`/trips/${trip.id}`)} className="cursor-pointer hover:bg-brand-50/50 transition-colors">
@@ -151,6 +153,27 @@ export default function TripsPage() {
                     </td>
                     <td className="p-4"><span className={`badge ${TRIP_STATUS_COLORS[trip.status]}`}>{TRIP_STATUS_LABELS[trip.status]}</span></td>
                     <td className="p-4 text-center"><span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">{trip._count?.reports || 0}</span></td>
+                    {isAdmin && (
+                      <td className="p-4 text-right">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if(confirm(`Bạn có chắc chắn muốn xóa phiếu công tác "${trip.title}" (${trip.code})?`)) {
+                              apiClient.delete(`/business-trips/${trip.id}/hard`)
+                                .then(() => fetchTrips())
+                                .catch((err) => {
+                                  const msg = err.response?.data?.message || err.message || 'Lỗi khi xóa phiếu công tác';
+                                  alert(Array.isArray(msg) ? msg.join(', ') : msg);
+                                });
+                            } 
+                          }} 
+                          className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors inline-flex items-center justify-center" 
+                          title="Xóa phiếu công tác"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

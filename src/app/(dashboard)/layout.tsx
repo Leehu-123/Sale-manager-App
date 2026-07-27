@@ -1,8 +1,6 @@
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Topbar } from '@/components/layout/Topbar'
 import { BottomNavBar } from '@/components/layout/BottomNavBar'
-import { PushNotificationManager } from '@/components/PushNotificationManager'
-
 import { LocationTracker } from '@/components/LocationTracker'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +14,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
       <div className="print:hidden"><BottomNavBar /></div>
-      <PushNotificationManager />
       <LocationTracker />
     </div>
   )

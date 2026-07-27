@@ -4,8 +4,9 @@ import { useEffect, useState, useRef } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { ArrowLeft, MapPin, Calendar, DollarSign, Upload, CheckCircle, XCircle, Plus, X } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, DollarSign, Upload, CheckCircle, XCircle, Plus, X, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { notifyUserTripApproved, notifyUserTripRejected } from '@/lib/telegram'
 import { Modal } from '@/components/ui/Modal'
 
 interface TripDailyReport {
@@ -91,6 +92,23 @@ export default function TripDetailPage() {
       } else {
         await apiClient.put(`/business-trips/${params.id}`, { status: newStatus });
       }
+
+      // Telegram notifications
+      if (newStatus === 'APPROVED' && trip) {
+        notifyUserTripApproved({
+          title: trip.title,
+          userId: trip.userId,
+          tripId: trip.id,
+        });
+      }
+      if (newStatus === 'REJECTED' && trip) {
+        notifyUserTripRejected({
+          title: trip.title,
+          userId: trip.userId,
+          tripId: trip.id,
+        });
+      }
+
       fetchTrip()
     } catch { alert('Lỗi cập nhật trạng thái') }
   }
@@ -125,7 +143,7 @@ export default function TripDetailPage() {
       if (sessionData?.user?.accessToken) {
         headers['Authorization'] = `Bearer ${sessionData.user.accessToken}`
       }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}/upload`, {
+      const res = await fetch('/api/upload', {
         method: 'POST',
         headers,
         body: formData,
@@ -214,6 +232,7 @@ export default function TripDetailPage() {
 
   const isOwner = session?.user?.id === trip.userId
   const canApprove = ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD'].includes(userRole || '')
+  const isAdmin = ['ADMIN', 'SALE_ADMIN'].includes(userRole || '')
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -246,6 +265,24 @@ export default function TripDetailPage() {
           {trip.status === 'IN_PROGRESS' && isOwner && (
             <button onClick={() => setShowFinishModal(true)} className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
               <CheckCircle size={16} /> Kết thúc công tác
+            </button>
+          )}
+          {isAdmin && (
+            <button 
+              onClick={() => {
+                if(confirm(`Bạn có chắc chắn muốn xóa phiếu công tác "${trip.title}" (${trip.code})?`)) {
+                  apiClient.delete(`/business-trips/${trip.id}/hard`)
+                    .then(() => router.push('/trips'))
+                    .catch((err) => {
+                      const msg = err.response?.data?.message || err.message || 'Lỗi khi xóa phiếu công tác';
+                      alert(Array.isArray(msg) ? msg.join(', ') : msg);
+                    });
+                }
+              }} 
+              className="flex-1 sm:flex-none px-4 py-2 border border-red-300 text-red-600 bg-red-50/50 hover:bg-red-100 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+              title="Xóa phiếu công tác này"
+            >
+              <Trash2 size={16} /> Xóa phiếu
             </button>
           )}
         </div>
@@ -328,7 +365,7 @@ export default function TripDetailPage() {
                         <div className="flex flex-wrap gap-2 mt-2">
                           {(Array.isArray(imagesArr) ? imagesArr : []).map((img: any, idx: number) => {
                             if (!img || typeof img !== 'string') return null;
-                            const fullSrc = img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img;
+                            const fullSrc = img.startsWith('/') && !img.startsWith('/api/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img;
                             return (
                               <img key={idx} src={fullSrc} alt="Báo cáo" className="h-20 w-20 object-cover rounded-lg border border-surface-200 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setLightboxImg(fullSrc)} />
                             )
@@ -375,7 +412,7 @@ export default function TripDetailPage() {
                 if (!img || typeof img !== 'string') return null;
                 return (
                 <div key={idx} className="relative group">
-                  <img src={img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img} alt="preview" className="h-16 w-16 object-cover rounded-lg border border-surface-200" />
+                  <img src={img.startsWith('/') && !img.startsWith('/api/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}${img}` : img} alt="preview" className="h-16 w-16 object-cover rounded-lg border border-surface-200" />
                   <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><XCircle size={14}/></button>
                 </div>
                 )

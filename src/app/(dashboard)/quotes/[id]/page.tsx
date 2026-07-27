@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { ArrowLeft, Plus, Trash2, Save, Printer } from 'lucide-react'
 import { formatCurrency, QUOTE_STATUS_LABELS, PRODUCT_UNIT_LABELS } from '@/lib/utils'
 import { apiClient } from '@/lib/api-client'
+import { notifyAdminQuoteSent, notifyUserQuoteApproved } from '@/lib/telegram'
 
 interface QuoteItem {
   id?: string; productId?: string; description: string; unit?: string; specification?: string
@@ -18,7 +19,7 @@ interface QuoteDetail {
   vatAmount: number; total: number; shippingCost: number; installationCost: number; discount: number
   terms?: string; notes?: string; expiryDate?: string; createdAt: string
   customer: { id: string; name: string; code: string; phone?: string; email?: string; address?: string }
-  createdBy: { name?: string; fullName?: string }
+  createdBy: { id?: string; name?: string; fullName?: string }
   items: QuoteItem[]
   _count?: { salesOrders: number }
 }
@@ -161,6 +162,25 @@ export default function QuoteDetailPage() {
         await apiClient.put(`/quotes/${params.id}`, { status: newStatus, customerId: quote?.customer.id, items: getCleanItems() })
       }
       setQuote(q => q ? { ...q, status: newStatus } : null)
+
+      // Telegram notifications
+      if (newStatus === 'SENT' && quote) {
+        notifyAdminQuoteSent({
+          quoteCode: quote.code,
+          customerName: quote.customer.name,
+          createdByName: quote.createdBy?.fullName || quote.createdBy?.name || 'Nhân viên',
+          total: grandTotal,
+          quoteId: quote.id,
+        });
+      }
+      if (newStatus === 'APPROVED' && quote) {
+        notifyUserQuoteApproved({
+          quoteCode: quote.code,
+          customerName: quote.customer.name,
+          createdById: quote.createdBy?.id || '',
+          quoteId: quote.id,
+        });
+      }
     } catch (err: any) { alert(err.message || 'Có lỗi xảy ra') }
   }
 

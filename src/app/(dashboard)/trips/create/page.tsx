@@ -3,10 +3,13 @@
 import { useState } from 'react'
 import { apiClient } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ArrowLeft, Save, MapPin } from 'lucide-react'
+import { notifyAdminTripProposed } from '@/lib/telegram'
 
 export default function CreateTripPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     title: '', destination: '', purpose: '', startDate: '', endDate: '', 
@@ -24,7 +27,7 @@ export default function CreateTripPage() {
       const enter = parseFloat(form.estimatedEntertainmentCost) || 0
       const totalCost = transport + food + accom + enter
 
-      const trip = await apiClient.post('/business-trips', {
+      const tripPayload = {
         ...form,
         startDate: new Date(form.startDate).toISOString(),
         endDate: new Date(form.endDate).toISOString(),
@@ -33,8 +36,20 @@ export default function CreateTripPage() {
         estimatedAccommodationCost: accom,
         estimatedEntertainmentCost: enter,
         estimatedCost: totalCost
+      }
+      const trip = await apiClient.post('/business-trips', tripPayload)
+      const tripId = trip.data?.id || trip.id
+      
+      // Telegram notification to admin
+      notifyAdminTripProposed({
+        tripId,
+        title: form.title,
+        destination: form.destination,
+        createdByName: session?.user?.name || 'Nhân viên',
+        estimatedCost: totalCost,
       })
-      router.push(`/trips/${trip.data.id}`)
+      
+      router.push(`/trips/${tripId}`)
     } catch (err: any) {
       alert(err.message || 'Có lỗi xảy ra')
     } finally {

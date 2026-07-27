@@ -154,7 +154,7 @@ export default function CustomersPage() {
         ...form,
         estimatedArea: form.estimatedArea ? parseFloat(form.estimatedArea) : undefined,
         estimatedBudget: form.estimatedBudget ? parseFloat(form.estimatedBudget) : undefined,
-        assignedToId: form.assignedToId || undefined
+        assignedToId: form.assignedToId || session?.user?.id || undefined
       };
       
       // Clean up empty strings
@@ -191,7 +191,7 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold text-surface-900">Khách hàng</h1>
           <p className="text-surface-500 text-sm mt-1">Quản lý thông tin khách hàng và lịch sử chăm sóc</p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all">
+        <button onClick={() => { resetForm(); setShowAddModal(true); }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all">
           <Plus size={16} /> Thêm khách hàng
         </button>
       </div>

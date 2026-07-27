@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Diamond,
   Map,
-  X
+  X,
+  User
 } from 'lucide-react'
 
 interface NavItem {
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { label: 'Công việc', icon: CheckSquare, href: '/tasks', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
   { label: 'Công tác', icon: Map, href: '/trips', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
   { label: 'Báo cáo', icon: BarChart3, href: '/reports' },
+  { label: 'Hồ sơ cá nhân', icon: User, href: '/users/me' },
   { label: 'Nhân viên', icon: UserCog, href: '/users', roles: ['ADMIN', 'SALE_ADMIN'] },
   { label: 'Cài đặt', icon: Settings, href: '/settings', roles: ['ADMIN'] },
 ]
@@ -66,6 +68,7 @@ export function Sidebar() {
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
+    if (href === '/users') return pathname === '/users' || (pathname.startsWith('/users/') && !pathname.startsWith('/users/me'))
     return pathname.startsWith(href)
   }
 
