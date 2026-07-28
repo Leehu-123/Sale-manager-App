@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Plus, Search, Filter, Users, UserPlus, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Search, Filter, Users, UserPlus, Phone, ChevronLeft, ChevronRight, MapPin, Navigation } from 'lucide-react'
 import {
   CUSTOMER_STATUS_LABELS, CUSTOMER_STATUS_COLORS, CUSTOMER_TYPE_LABELS,
   CUSTOMER_SOURCE_LABELS, formatDate, extractArray
@@ -17,6 +17,7 @@ interface Customer {
   contactPerson?: string; address?: string; province?: string; projectName?: string
   productNeeds?: string[]; estimatedArea?: number; estimatedBudget?: number
   notes?: string; nextFollowUpDate?: string
+  description?: string; latitude?: number; longitude?: number
 }
 
 interface UserOption { id: string; name: string }
@@ -42,7 +43,9 @@ export default function CustomersPage() {
     address: '', province: '', projectName: '', source: 'WEBSITE',
     status: 'NEW', productNeeds: [] as string[], estimatedArea: '',
     estimatedBudget: '', notes: '', assignedToId: '',
+    description: '', latitude: '' as string | number, longitude: '' as string | number,
   })
+  const [gettingLocation, setGettingLocation] = useState(false)
 
   const [assignedToIdFilter, setAssignedToIdFilter] = useState('')
 
@@ -108,7 +111,7 @@ export default function CustomersPage() {
 
   const resetForm = () => {
     setEditId(null);
-    setForm({ type: 'INDIVIDUAL', name: '', contactPerson: '', phone: '', email: '', address: '', province: '', projectName: '', source: 'WEBSITE', status: 'NEW', productNeeds: [], estimatedArea: '', estimatedBudget: '', notes: '', assignedToId: session?.user?.id || '' })
+    setForm({ type: 'INDIVIDUAL', name: '', contactPerson: '', phone: '', email: '', address: '', province: '', projectName: '', source: 'WEBSITE', status: 'NEW', productNeeds: [], estimatedArea: '', estimatedBudget: '', notes: '', assignedToId: session?.user?.id || '', description: '', latitude: '', longitude: '' })
   }
 
   const handleEditClick = (c: Customer, e: React.MouseEvent) => {
@@ -141,7 +144,10 @@ export default function CustomersPage() {
         estimatedArea: c.estimatedArea ? String(c.estimatedArea) : '',
         estimatedBudget: c.estimatedBudget ? String(c.estimatedBudget) : '',
         notes: c.notes || '',
-        assignedToId: c.assignedTo?.id || ''
+        assignedToId: c.assignedTo?.id || '',
+        description: (c as any).description || '',
+        latitude: (c as any).latitude || '',
+        longitude: (c as any).longitude || '',
       });
     setShowAddModal(true);
   }
@@ -152,9 +158,12 @@ export default function CustomersPage() {
     try {
       const payload: any = {
         ...form,
-        estimatedArea: form.estimatedArea ? parseFloat(form.estimatedArea) : undefined,
-        estimatedBudget: form.estimatedBudget ? parseFloat(form.estimatedBudget) : undefined,
-        assignedToId: form.assignedToId || session?.user?.id || undefined
+        estimatedArea: form.estimatedArea ? parseFloat(form.estimatedArea as string) : undefined,
+        estimatedBudget: form.estimatedBudget ? parseFloat(form.estimatedBudget as string) : undefined,
+        assignedToId: form.assignedToId || session?.user?.id || undefined,
+        latitude: form.latitude ? parseFloat(String(form.latitude)) : undefined,
+        longitude: form.longitude ? parseFloat(String(form.longitude)) : undefined,
+        description: form.description || undefined,
       };
       
       // Clean up empty strings
@@ -380,6 +389,48 @@ export default function CustomersPage() {
             <label className="block text-sm font-medium text-surface-700 mb-1">Địa chỉ</label>
             <input value={form.address} onChange={e => setForm({...form, address: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
           </div>
+          {/* Vị trí GPS */}
+          <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-surface-700 flex items-center gap-1.5">
+                <MapPin size={15} className="text-blue-600" /> Vị trí trên bản đồ
+              </label>
+              <button
+                type="button"
+                disabled={gettingLocation}
+                onClick={() => {
+                  if (!('geolocation' in navigator)) { alert('Trình duyệt không hỗ trợ định vị'); return }
+                  setGettingLocation(true)
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      setForm(f => ({...f, latitude: pos.coords.latitude, longitude: pos.coords.longitude }))
+                      setGettingLocation(false)
+                    },
+                    (err) => { alert('Không thể lấy vị trí: ' + err.message); setGettingLocation(false) },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                  )
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+              >
+                <Navigation size={13} /> {gettingLocation ? 'Đang lấy...' : 'Lấy vị trí hiện tại'}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-surface-500 mb-1">Vĩ độ (Latitude)</label>
+                <input value={form.latitude} onChange={e => setForm({...form, latitude: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm font-mono bg-white" placeholder="VD: 16.0471" />
+              </div>
+              <div>
+                <label className="block text-xs text-surface-500 mb-1">Kinh độ (Longitude)</label>
+                <input value={form.longitude} onChange={e => setForm({...form, longitude: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm font-mono bg-white" placeholder="VD: 108.2068" />
+              </div>
+            </div>
+            {form.latitude && form.longitude && (
+              <a href={`https://maps.google.com/?q=${form.latitude},${form.longitude}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                <MapPin size={12} /> Xem trên Google Maps
+              </a>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Công trình / Dự án</label>
             <input value={form.projectName} onChange={e => setForm({...form, projectName: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
@@ -416,9 +467,15 @@ export default function CustomersPage() {
               </select>
             </div>
           )}
+          {/* Mô tả khách hàng */}
+          <div className="bg-amber-50/60 rounded-xl p-4 border border-amber-100">
+            <label className="block text-sm font-medium text-surface-700 mb-1">📋 Mô tả khách hàng</label>
+            <p className="text-xs text-surface-400 mb-2">Ghi chú thói quen mua hàng, người ra quyết định, quy trình nội bộ của đại lý... để sale tiếp nhận có thể tham khảo.</p>
+            <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white" rows={4} placeholder="VD: Đại lý lớn, mua hàng theo quý. Người quyết định: Anh Hùng (GĐ). Thích sản phẩm kính cường lực 10mm, yêu cầu giao hàng nhanh..." />
+          </div>
           <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Ghi chú</label>
-            <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" rows={3} />
+            <label className="block text-sm font-medium text-surface-700 mb-1">Ghi chú nhanh</label>
+            <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" rows={2} />
           </div>
           <div className="flex gap-3 pt-2 pb-4">
             <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2 border border-surface-300 rounded-lg text-sm font-medium hover:bg-surface-50">Hủy</button>

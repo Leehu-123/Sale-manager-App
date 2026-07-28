@@ -13,6 +13,7 @@ interface CustomerDetail {
   projectName?: string; source: string; status: string; productNeeds: string[]
   estimatedArea?: number; estimatedBudget?: number; notes?: string
   nextFollowUpDate?: string; createdAt: string; updatedAt: string
+  description?: string; latitude?: number; longitude?: number
   assignedTo?: { id: string; name: string }
   interactions: Array<{ id: string; type: string; content: string; result?: string; createdAt: string; user: { name: string }; nextFollowUpDate?: string }>
   opportunities: Array<{ id: string; code: string; name: string; stage: string; estimatedValue: number }>
@@ -93,6 +94,14 @@ export default function CustomerDetailPage() {
           {customer.address && (
             <div className="flex items-center gap-2 text-sm"><MapPin size={14} className="text-surface-400" /><span>{customer.address}{customer.province ? `, ${customer.province}` : ''}</span></div>
           )}
+          {(customer as any).latitude && (customer as any).longitude && (
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin size={14} className="text-green-600" />
+              <a href={`https://maps.google.com/?q=${(customer as any).latitude},${(customer as any).longitude}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline font-medium">
+                Xem vị trí trên Google Maps ↗
+              </a>
+            </div>
+          )}
           {customer.projectName && (
             <div className="flex items-center gap-2 text-sm"><Building2 size={14} className="text-surface-400" /><span>{customer.projectName}</span></div>
           )}
@@ -124,14 +133,23 @@ export default function CustomerDetailPage() {
       {/* Tab Content */}
       <div className="animate-fade-in">
         {activeTab === 'info' && (
-          <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="text-surface-500">Người liên hệ:</span> <span className="font-medium">{customer.contactPerson || '-'}</span></div>
-              <div><span className="text-surface-500">Diện tích dự kiến:</span> <span className="font-medium">{customer.estimatedArea ? `${customer.estimatedArea} m²` : '-'}</span></div>
-              <div><span className="text-surface-500">Ngân sách:</span> <span className="font-medium">{customer.estimatedBudget ? formatCurrency(customer.estimatedBudget) : '-'}</span></div>
-              <div><span className="text-surface-500">Ngày tạo:</span> <span className="font-medium">{formatDate(customer.createdAt)}</span></div>
+          <div className="space-y-4">
+            {/* Mô tả khách hàng */}
+            {(customer as any).description && (
+              <div className="bg-amber-50 rounded-xl p-5 shadow-sm border border-amber-200">
+                <h3 className="text-sm font-semibold text-amber-900 mb-2 flex items-center gap-1.5">📋 Mô tả khách hàng</h3>
+                <p className="text-sm text-surface-800 whitespace-pre-wrap leading-relaxed">{(customer as any).description}</p>
+              </div>
+            )}
+            <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><span className="text-surface-500">Người liên hệ:</span> <span className="font-medium">{customer.contactPerson || '-'}</span></div>
+                <div><span className="text-surface-500">Diện tích dự kiến:</span> <span className="font-medium">{customer.estimatedArea ? `${customer.estimatedArea} m²` : '-'}</span></div>
+                <div><span className="text-surface-500">Ngân sách:</span> <span className="font-medium">{customer.estimatedBudget ? formatCurrency(customer.estimatedBudget) : '-'}</span></div>
+                <div><span className="text-surface-500">Ngày tạo:</span> <span className="font-medium">{formatDate(customer.createdAt)}</span></div>
+              </div>
+              {customer.notes && <div className="pt-4 border-t"><p className="text-sm text-surface-500">Ghi chú:</p><p className="text-sm mt-1">{customer.notes}</p></div>}
             </div>
-            {customer.notes && <div className="pt-4 border-t"><p className="text-sm text-surface-500">Ghi chú:</p><p className="text-sm mt-1">{customer.notes}</p></div>}
           </div>
         )}
 
