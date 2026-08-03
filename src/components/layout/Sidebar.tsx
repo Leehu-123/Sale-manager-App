@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
   { label: 'Báo giá', icon: FileText, href: '/quotes', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
   { label: 'Đơn hàng', icon: ShoppingCart, href: '/orders' },
   { label: 'Công việc', icon: CheckSquare, href: '/tasks', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
-  { label: 'Công tác', icon: Map, href: '/trips', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES'] },
+  { label: 'Công tác', icon: Map, href: '/trips', roles: ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD', 'SALES', 'ACCOUNTANT'] },
   { label: 'Báo cáo', icon: BarChart3, href: '/reports' },
   { label: 'Hồ sơ cá nhân', icon: User, href: '/users/me' },
   { label: 'Nhân viên', icon: UserCog, href: '/users', roles: ['ADMIN', 'SALE_ADMIN'] },
