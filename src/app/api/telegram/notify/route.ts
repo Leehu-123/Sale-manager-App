@@ -58,6 +58,8 @@ export async function POST(request: Request) {
 
     if (target === 'admin') {
       chatId = settings.telegram_admin_chat_id;
+    } else if (target === 'accountant') {
+      chatId = settings.telegram_accountant_chat_id;
     } else if (target.startsWith('user:')) {
       const userId = target.replace('user:', '');
       const users = getTelegramUsers();

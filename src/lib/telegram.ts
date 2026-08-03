@@ -61,7 +61,7 @@ Bạn có thể tiến hành tạo đơn hàng.
 
 // ===== ĐỀ XUẤT CÔNG TÁC (TRIPS) =====
 
-/** Khi Sale tạo đề xuất công tác → thông báo cho Admin */
+/** Khi Sale tạo đề xuất công tác → thông báo cho Admin + Kế toán */
 export function notifyAdminTripProposed(data: {
   tripId: string;
   title: string;
@@ -77,19 +77,52 @@ Người đề xuất: ${data.createdByName}
 Điểm đến: ${data.destination}
 Dự toán: <b>${formatCurrency(data.estimatedCost)}</b>
 
+⏳ Đang chờ Kế toán duyệt chi phí.
 🔗 <a href="${baseUrl}/trips/${data.tripId}">Xem chi tiết</a>`;
 
   notify('admin', message);
+  notify('accountant', message);
 }
 
-/** Khi Admin duyệt đề xuất → thông báo cho người đề xuất */
+/** Khi Kế toán duyệt chi phí → thông báo cho Admin + người đề xuất */
+export function notifyTripAccountantApproved(data: {
+  title: string;
+  tripId: string;
+  userId: string;
+  estimatedCost: number;
+}) {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+  // Thông báo cho Admin/Lãnh đạo
+  const adminMsg = `✅ <b>KẾ TOÁN ĐÃ DUYỆT CHI PHÍ</b>
+
+Tiêu đề: <b>${data.title}</b>
+Dự toán: <b>${formatCurrency(data.estimatedCost)}</b>
+
+⏳ Đang chờ Lãnh đạo phê duyệt.
+🔗 <a href="${baseUrl}/trips/${data.tripId}">Xem & Phê duyệt</a>`;
+
+  notify('admin', adminMsg);
+
+  // Thông báo cho người đề xuất
+  const userMsg = `✅ <b>KẾ TOÁN ĐÃ DUYỆT CHI PHÍ CÔNG TÁC</b>
+
+Tiêu đề: <b>${data.title}</b>
+
+Chi phí đề xuất đã được Kế toán xác nhận. Đang chờ Lãnh đạo phê duyệt.
+🔗 <a href="${baseUrl}/trips/${data.tripId}">Xem chi tiết</a>`;
+
+  notify(`user:${data.userId}`, userMsg);
+}
+
+/** Khi Lãnh đạo phê duyệt cuối → thông báo cho người đề xuất + Kế toán */
 export function notifyUserTripApproved(data: {
   title: string;
   userId: string;
   tripId: string;
 }) {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const message = `✅ <b>ĐỀ XUẤT CÔNG TÁC ĐÃ ĐƯỢC DUYỆT</b>
+  const message = `✅ <b>LÃNH ĐẠO ĐÃ PHÊ DUYỆT CÔNG TÁC</b>
 
 Tiêu đề: <b>${data.title}</b>
 
@@ -97,9 +130,10 @@ Bạn có thể bắt đầu chuyến công tác.
 🔗 <a href="${baseUrl}/trips/${data.tripId}">Xem chi tiết</a>`;
 
   notify(`user:${data.userId}`, message);
+  notify('accountant', message);
 }
 
-/** Khi Admin từ chối đề xuất → thông báo cho người đề xuất */
+/** Khi từ chối đề xuất → thông báo cho người đề xuất */
 export function notifyUserTripRejected(data: {
   title: string;
   userId: string;

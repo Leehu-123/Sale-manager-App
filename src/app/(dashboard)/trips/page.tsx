@@ -16,6 +16,7 @@ interface Trip {
 
 const TRIP_STATUS_LABELS: Record<string, string> = {
   PROPOSED: 'Đề xuất',
+  ACCOUNTANT_APPROVED: 'KT đã duyệt',
   APPROVED: 'Đã duyệt',
   REJECTED: 'Từ chối',
   IN_PROGRESS: 'Đang đi',
@@ -24,6 +25,7 @@ const TRIP_STATUS_LABELS: Record<string, string> = {
 
 const TRIP_STATUS_COLORS: Record<string, string> = {
   PROPOSED: 'bg-amber-100 text-amber-800',
+  ACCOUNTANT_APPROVED: 'bg-teal-100 text-teal-800',
   APPROVED: 'bg-blue-100 text-blue-800',
   REJECTED: 'bg-red-100 text-red-800',
   IN_PROGRESS: 'bg-indigo-100 text-indigo-800',

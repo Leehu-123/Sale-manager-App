@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ArrowLeft, MapPin, Calendar, DollarSign, Upload, CheckCircle, XCircle, Plus, X, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { notifyUserTripApproved, notifyUserTripRejected } from '@/lib/telegram'
+import { notifyUserTripApproved, notifyUserTripRejected, notifyTripAccountantApproved } from '@/lib/telegram'
 import { Modal } from '@/components/ui/Modal'
 
 interface TripDailyReport {
@@ -27,14 +27,14 @@ interface TripDetail {
 }
 
 const TRIP_STATUS_LABELS: Record<string, string> = {
-  PROPOSED: 'Đề xuất', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối',
+  PROPOSED: 'Đề xuất', ACCOUNTANT_APPROVED: 'KT đã duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối',
   IN_PROGRESS: 'Đang đi', COMPLETED: 'Hoàn thành',
 }
 
 const TRIP_STATUS_COLORS: Record<string, string> = {
-  PROPOSED: 'bg-amber-100 text-amber-800', APPROVED: 'bg-blue-100 text-blue-800',
-  REJECTED: 'bg-red-100 text-red-800', IN_PROGRESS: 'bg-indigo-100 text-indigo-800',
-  COMPLETED: 'bg-green-100 text-green-800',
+  PROPOSED: 'bg-amber-100 text-amber-800', ACCOUNTANT_APPROVED: 'bg-teal-100 text-teal-800',
+  APPROVED: 'bg-blue-100 text-blue-800', REJECTED: 'bg-red-100 text-red-800',
+  IN_PROGRESS: 'bg-indigo-100 text-indigo-800', COMPLETED: 'bg-green-100 text-green-800',
 }
 
 export default function TripDetailPage() {
@@ -82,7 +82,8 @@ export default function TripDetailPage() {
   const handleStatusChange = async (newStatus: string) => {
     try {
       let endpoint = '';
-      if (newStatus === 'APPROVED') endpoint = 'approve';
+      if (newStatus === 'ACCOUNTANT_APPROVED') endpoint = 'accountant-approve';
+      else if (newStatus === 'APPROVED') endpoint = 'approve';
       else if (newStatus === 'REJECTED') endpoint = 'reject';
       else if (newStatus === 'IN_PROGRESS') endpoint = 'start';
       else if (newStatus === 'COMPLETED') endpoint = 'complete';
@@ -94,6 +95,14 @@ export default function TripDetailPage() {
       }
 
       // Telegram notifications
+      if (newStatus === 'ACCOUNTANT_APPROVED' && trip) {
+        notifyTripAccountantApproved({
+          title: trip.title,
+          tripId: trip.id,
+          userId: trip.userId,
+          estimatedCost: trip.estimatedCost,
+        });
+      }
       if (newStatus === 'APPROVED' && trip) {
         notifyUserTripApproved({
           title: trip.title,
@@ -231,8 +240,13 @@ export default function TripDetailPage() {
   if (!trip) return <div className="text-center py-12 text-surface-500">Không tìm thấy dữ liệu</div>
 
   const isOwner = session?.user?.id === trip.userId
-  const canApprove = ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD'].includes(userRole || '')
+  const isAccountant = ['ACCOUNTANT'].includes(userRole || '')
+  const isLeader = ['ADMIN', 'SALE_ADMIN', 'SALE_LEAD'].includes(userRole || '')
   const isAdmin = ['ADMIN', 'SALE_ADMIN'].includes(userRole || '')
+  // KT hoặc Admin có thể duyệt bước KT
+  const canAccountantApprove = isAccountant || isAdmin
+  // Admin/Lãnh đạo duyệt bước cuối
+  const canLeaderApprove = isLeader
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -251,11 +265,27 @@ export default function TripDetailPage() {
         
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
-          {trip.status === 'PROPOSED' && canApprove && (
+          {/* Bước 1: Kế toán duyệt chi phí (PROPOSED → ACCOUNTANT_APPROVED) */}
+          {trip.status === 'PROPOSED' && canAccountantApprove && (
             <>
               <button onClick={() => handleStatusChange('REJECTED')} className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50">Từ chối</button>
-              <button onClick={() => handleStatusChange('APPROVED')} className="flex-1 sm:flex-none px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600">Phê duyệt</button>
+              <button onClick={() => handleStatusChange('ACCOUNTANT_APPROVED')} className="flex-1 sm:flex-none px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-medium hover:bg-teal-600 flex items-center gap-1.5"><CheckCircle size={15} /> KT Duyệt chi phí</button>
             </>
+          )}
+          {/* Chờ KT duyệt - hiện thông báo cho lãnh đạo */}
+          {trip.status === 'PROPOSED' && !canAccountantApprove && isLeader && (
+            <span className="px-4 py-2 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-200">⏳ Chờ Kế toán duyệt chi phí</span>
+          )}
+          {/* Bước 2: Lãnh đạo phê duyệt (ACCOUNTANT_APPROVED → APPROVED) */}
+          {trip.status === 'ACCOUNTANT_APPROVED' && canLeaderApprove && (
+            <>
+              <button onClick={() => handleStatusChange('REJECTED')} className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50">Từ chối</button>
+              <button onClick={() => handleStatusChange('APPROVED')} className="flex-1 sm:flex-none px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 flex items-center gap-1.5"><CheckCircle size={15} /> LĐ Phê duyệt</button>
+            </>
+          )}
+          {/* KT thấy badge đã duyệt - chờ LĐ */}
+          {trip.status === 'ACCOUNTANT_APPROVED' && isAccountant && !isAdmin && (
+            <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-lg text-sm font-medium border border-teal-200">✅ Đã duyệt CP - Chờ Lãnh đạo</span>
           )}
           {(trip.status === 'APPROVED' || trip.status === 'IN_PROGRESS') && isOwner && (
             <button onClick={() => setShowReportModal(true)} className="flex-1 sm:flex-none px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
