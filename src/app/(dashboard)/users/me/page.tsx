@@ -45,7 +45,7 @@ export default function UserProfilePage() {
       const res = await fetch('/api/telegram/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, chatId: telegramChatId })
+        body: JSON.stringify({ userId, chatId: telegramChatId, role: userRole })
       })
       if (res.ok) {
         setTelegramSaved(true)

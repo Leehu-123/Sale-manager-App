@@ -266,16 +266,6 @@ export default function SettingsPage() {
               />
               <p className="text-xs text-surface-400 mt-1">Chat ID này sẽ nhận thông báo khi có báo giá/đề xuất mới cần duyệt</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Chat ID nhận thông báo (Kế toán)</label>
-              <input
-                value={settings.telegram_accountant_chat_id || ''}
-                onChange={e => setSettings({...settings, telegram_accountant_chat_id: e.target.value})}
-                className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm font-mono"
-                placeholder="Chat ID của tài khoản Kế toán"
-              />
-              <p className="text-xs text-surface-400 mt-1">Chat ID này sẽ nhận thông báo khi có đề xuất công tác mới cần duyệt chi phí</p>
-            </div>
             
             <div className="flex gap-3 pt-2">
               <button

@@ -19,7 +19,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { userId, chatId } = await request.json();
+    const { userId, chatId, role } = await request.json();
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
@@ -35,8 +35,14 @@ export async function POST(request: Request) {
 
     if (chatId) {
       users[userId] = String(chatId);
+      if (role === 'ACCOUNTANT') {
+        users['role:ACCOUNTANT'] = String(chatId);
+      }
     } else {
       delete users[userId];
+      if (role === 'ACCOUNTANT') {
+        delete users['role:ACCOUNTANT'];
+      }
     }
 
     fs.writeFileSync(telegramUsersFile, JSON.stringify(users, null, 2), 'utf8');
