@@ -28,7 +28,8 @@ export default function CreateQuotePage() {
   const [discount, setDiscount] = useState(0)
   const [items, setItems] = useState<QuoteItem[]>([{ description: '', thickness: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])
   const [discountRate, setDiscountRate] = useState(0)
-  const [stockMap, setStockMap] = useState<Record<string, { physicalStock: number; reservedStock: number; availableStock: number }>>({})
+  const [stockMap, setStockMap] = useState<Record<string, { physicalStock: number; reservedStock: number; incomingStock?: number; availableStock: number }>>({})
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
 
   useEffect(() => {
     const extractArray = (res: any) => {
@@ -41,20 +42,22 @@ export default function CreateQuotePage() {
       return [];
     };
 
+    const stockUrl = expectedDeliveryDate ? `/inventory/available-stock?asOfDate=${expectedDeliveryDate}` : '/inventory/available-stock';
     Promise.all([
       apiClient.get('/customers?page=1&limit=100'),
       apiClient.get('/products?page=1&limit=100'),
-      apiClient.get('/inventory/available-stock').catch(() => null),
+      apiClient.get(stockUrl).catch(() => null),
     ]).then(([c, p, stock]) => {
       setCustomers(extractArray(c));
       setProducts(extractArray(p));
       const stockArray = extractArray(stock);
-      const sMap: Record<string, { physicalStock: number; reservedStock: number; availableStock: number }> = {};
+      const sMap: Record<string, { physicalStock: number; reservedStock: number; incomingStock?: number; availableStock: number }> = {};
       stockArray.forEach((item: any) => {
         if (item.productId) {
           sMap[item.productId] = {
             physicalStock: item.physicalStock || 0,
             reservedStock: item.reservedStock || 0,
+            incomingStock: item.incomingStock || 0,
             availableStock: item.availableStock || 0,
           };
         }
@@ -63,7 +66,7 @@ export default function CreateQuotePage() {
     }).catch(err => {
       console.error('Fetch error:', err);
     })
-  }, [])
+  }, [expectedDeliveryDate])
 
   const updateItem = (index: number, field: string, value: unknown) => {
     const updated = [...items]
@@ -159,6 +162,10 @@ export default function CreateQuotePage() {
                 {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Ngày giao hàng dự kiến (Tính cộng dồn đơn hàng sắp về)</label>
+              <input type="date" value={expectedDeliveryDate} onChange={e => setExpectedDeliveryDate(e.target.value)} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
           </div>
         </div>
 
@@ -197,6 +204,7 @@ export default function CreateQuotePage() {
                       {item.productId && stockMap[item.productId] && (
                         <div className="text-[10px] text-brand-600 font-medium mb-1">
                           Tồn thực: {stockMap[item.productId].physicalStock} | Khả dụng: <span className={stockMap[item.productId].availableStock <= 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{stockMap[item.productId].availableStock}</span>
+                          {(stockMap[item.productId].incomingStock || 0) > 0 && <span className="text-blue-600 ml-1">(+{(stockMap[item.productId].incomingStock || 0)} dự kiến về)</span>}
                         </div>
                       )}
                       <input placeholder="Ghi chú SP" value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" />
