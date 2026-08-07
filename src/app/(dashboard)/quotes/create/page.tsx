@@ -28,6 +28,7 @@ export default function CreateQuotePage() {
   const [discount, setDiscount] = useState(0)
   const [items, setItems] = useState<QuoteItem[]>([{ description: '', thickness: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])
   const [discountRate, setDiscountRate] = useState(0)
+  const [stockMap, setStockMap] = useState<Record<string, { physicalStock: number; reservedStock: number; availableStock: number }>>({})
 
   useEffect(() => {
     const extractArray = (res: any) => {
@@ -43,9 +44,22 @@ export default function CreateQuotePage() {
     Promise.all([
       apiClient.get('/customers?page=1&limit=100'),
       apiClient.get('/products?page=1&limit=100'),
-    ]).then(([c, p]) => {
+      apiClient.get('/inventory/available-stock').catch(() => null),
+    ]).then(([c, p, stock]) => {
       setCustomers(extractArray(c));
       setProducts(extractArray(p));
+      const stockArray = extractArray(stock);
+      const sMap: Record<string, { physicalStock: number; reservedStock: number; availableStock: number }> = {};
+      stockArray.forEach((item: any) => {
+        if (item.productId) {
+          sMap[item.productId] = {
+            physicalStock: item.physicalStock || 0,
+            reservedStock: item.reservedStock || 0,
+            availableStock: item.availableStock || 0,
+          };
+        }
+      });
+      setStockMap(sMap);
     }).catch(err => {
       console.error('Fetch error:', err);
     })
@@ -180,6 +194,11 @@ export default function CreateQuotePage() {
                       <select value={item.productId || ''} onChange={e => updateItem(i, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs mb-1">
                         <option value="">Chọn SP</option>{products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} - ${p.name}` : p.name}</option>)}
                       </select>
+                      {item.productId && stockMap[item.productId] && (
+                        <div className="text-[10px] text-brand-600 font-medium mb-1">
+                          Tồn thực: {stockMap[item.productId].physicalStock} | Khả dụng: <span className={stockMap[item.productId].availableStock <= 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{stockMap[item.productId].availableStock}</span>
+                        </div>
+                      )}
                       <input placeholder="Ghi chú SP" value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" />
                     </td>
                     <td className="p-2"><input placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(i, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" /></td>
