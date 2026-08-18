@@ -1,0 +1,131 @@
+/* KanbanBoard - Bảng Kanban kéo thả */
+.boardContainer {
+  overflow-x: auto;
+  padding-bottom: var(--spacing-md);
+}
+
+.board {
+  display: flex;
+  gap: var(--spacing-md);
+  min-height: 500px;
+  min-width: fit-content;
+}
+
+/* Cột Kanban */
+.column {
+  width: 280px;
+  min-width: 280px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  transition: background var(--transition-base);
+}
+
+.column.draggingOver {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--glass-border-hover);
+}
+
+/* Header cột */
+.columnHeader {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  position: relative;
+}
+
+.columnHeader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Màu viền trên cho từng giai đoạn */
+.stagePROSPECTING .columnHeader::before {
+  background: var(--accent-blue);
+}
+
+.stagePROPOSAL .columnHeader::before {
+  background: var(--accent-purple);
+}
+
+.stageNEGOTIATION .columnHeader::before {
+  background: var(--accent-orange);
+}
+
+.stageWON .columnHeader::before {
+  background: var(--accent-green);
+}
+
+.stageLOST .columnHeader::before {
+  background: var(--accent-red);
+}
+
+.columnTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stageName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stageCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.stageTotal {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Danh sách thẻ */
+.cardList {
+  flex: 1;
+  padding: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: 100px;
+  overflow-y: auto;
+  max-height: calc(100vh - 300px);
+}
+
+/* Thẻ rỗng */
+.emptyColumn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  font-style: italic;
+}
+
+@media (max-width: 1200px) {
+  .column {
+    width: 250px;
+    min-width: 250px;
+  }
+}

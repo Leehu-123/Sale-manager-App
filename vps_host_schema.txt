@@ -1,0 +1,17 @@
+=== HOST SCHEMA CHECK ===
+  source          String?
+  assignedToId    String?   @map("assigned_to_id") @db.Uuid
+  crmStatus       String?   @map("crm_status")
+  productNeeds    String?   @map("product_needs")
+  estimatedArea   Float?    @map("estimated_area")
+  estimatedBudget Float?    @map("estimated_budget")
+  nextFollowUpDate DateTime? @map("next_follow_up_date")
+  assignedToId    String?    @map("assigned_to_id") @db.Uuid
+  crmStatus       String?    @default("NEW") @map("crm_status")
+  productNeeds    String?    @map("product_needs")
+  estimatedArea   Float?     @map("estimated_area")
+  estimatedBudget Float?     @map("estimated_budget")
+  nextFollowUpDate DateTime? @map("next_follow_up_date")
+
+  company   Company @relation(fields: [companyId], references: [id])
+  createdBy User?   @relation("CustomerCreatedBy", fields: [createdById], references: [id])

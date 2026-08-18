@@ -1,0 +1,308 @@
+=== Core API Users Service ===
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UsersService = void 0;
+const common_1 = require("@nestjs/common");
+const bcrypt = __importStar(require("bcrypt"));
+const api_response_dto_1 = require("../../common/dto/api-response.dto");
+const services_1 = require("../../common/services");
+const prisma_service_1 = require("../../prisma/prisma.service");
+let UsersService = class UsersService {
+    constructor(prisma, auditLogService) {
+        this.prisma = prisma;
+        this.auditLogService = auditLogService;
+    }
+    async findAll(companyId, query) {
+        const where = {
+            companyId,
+            deletedAt: null,
+        };
+        if (query.search) {
+            where.OR = [
+                { fullName: { contains: query.search, mode: 'insensitive' } },
+                { email: { contains: query.search, mode: 'insensitive' } },
+            ];
+        }
+        const [users, total] = await Promise.all([
+            this.prisma.user.findMany({
+                where,
+                skip: query.skip,
+                take: query.limit,
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.user.count({ where }),
+        ]);
+        return {
+            data: users.map((user) => this.excludePassword(user)),
+            meta: new api_response_dto_1.PaginationMeta(query.page, query.limit, total),
+        };
+    }
+    async findOne(id, companyId) {
+        const user = await this.prisma.user.findFirst({
+            where: { id, companyId, deletedAt: null },
+            include: {
+                userRoles: {
+                    include: { role: true },
+                },
+            },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        return this.excludePassword(user);
+    }
+    async create(companyId, userId, dto) {
+        const passwordHash = await bcrypt.hash(dto.password, 12);
+        const user = await this.prisma.user.create({
+            data: {
+                email: dto.email,
+                passwordHash,
+                fullName: dto.fullName,
+                phone: dto.phone,
+                companyId,
+                createdById: userId,
+                updatedById: userId,
+            },
+        });
+        if (dto.roleNames && dto.roleNames.length > 0) {
+            const roles = await this.prisma.role.findMany({
+                where: {
+                    name: { in: dto.roleNames },
+                    companyId,
+                },
+            });
+            if (roles.length > 0) {
+                await this.prisma.userRole.createMany({
+                    data: roles.map((role) => ({
+                        userId: user.id,
+                        roleId: role.id,
+                    })),
+                });
+            }
+        }
+        await this.auditLogService.log({
+            companyId,
+            userId,
+            action: 'CREATED',
+            entity: 'User',
+            entityId: user.id,
+            newValue: JSON.stringify({ email: dto.email, fullName: dto.fullName }),
+        });
+        return this.excludePassword(user);
+    }
+    async update(id, companyId, userId, dto) {
+        const existingUser = await this.prisma.user.findFirst({
+            where: { id, companyId, deletedAt: null },
+--
+            updateData.isActive = dto.isActive;
+        if (dto.password) {
+            updateData.passwordHash = await bcrypt.hash(dto.password, 12);
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id },
+            data: updateData,
+        });
+        if (dto.roleNames !== undefined) {
+            await this.prisma.userRole.deleteMany({
+                where: { userId: id },
+            });
+            if (dto.roleNames.length > 0) {
+                const roles = await this.prisma.role.findMany({
+                    where: {
+                        name: { in: dto.roleNames },
+                        companyId,
+                    },
+                });
+                if (roles.length > 0) {
+                    await this.prisma.userRole.createMany({
+                        data: roles.map((role) => ({
+                            userId: id,
+                            roleId: role.id,
+                        })),
+                    });
+                }
+            }
+        }
+        await this.auditLogService.log({
+            companyId,
+            userId,
+            action: 'UPDATED',
+            entity: 'User',
+            entityId: id,
+            oldValue: JSON.stringify({
+                email: existingUser.email,
+                fullName: existingUser.fullName,
+                isActive: existingUser.isActive,
+            }),
+            newValue: JSON.stringify({
+=== Core API Teams Service ===
+let TeamsService = class TeamsService {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async findAll(companyId) {
+        return this.prisma.team.findMany({
+            where: { companyId },
+            include: { _count: { select: { users: true } } },
+            orderBy: { name: 'asc' },
+        });
+    }
+    async findOne(id, companyId) {
+        const team = await this.prisma.team.findUnique({
+            where: { id, companyId },
+            include: { users: { select: { id: true, fullName: true, email: true, phone: true, isActive: true } } },
+        });
+        if (!team)
+            throw new common_1.NotFoundException('Team not found');
+        return team;
+    }
+    async create(companyId, dto) {
+        return this.prisma.team.create({ data: { companyId, ...dto } });
+    }
+    async update(id, companyId, dto) {
+        await this.findOne(id, companyId);
+        return this.prisma.team.update({ where: { id }, data: dto });
+    }
+    async remove(id, companyId) {
+        await this.findOne(id, companyId);
+        await this.prisma.team.delete({ where: { id } });
+        return { success: true };
+    }
+};
+exports.TeamsService = TeamsService;
+exports.TeamsService = TeamsService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+], TeamsService);
+//# sourceMappingURL=teams.service.js.map
+=== Core API Customers Service ===
+        }
+        if (query.phone) {
+            where.phone = { contains: query.phone, mode: 'insensitive' };
+        }
+        if (query.email) {
+            where.email = { contains: query.email, mode: 'insensitive' };
+        }
+        if (query.search) {
+            where.OR = [
+                { name: { contains: query.search, mode: 'insensitive' } },
+                { code: { contains: query.search, mode: 'insensitive' } },
+                { phone: { contains: query.search, mode: 'insensitive' } },
+                { email: { contains: query.search, mode: 'insensitive' } },
+            ];
+        }
+        const [data, total] = await Promise.all([
+            this.prisma.customer.findMany({
+                where,
+                skip: query.skip,
+                take: query.limit,
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.customer.count({ where }),
+        ]);
+        return {
+            data,
+            meta: new api_response_dto_1.PaginationMeta(query.page, query.limit, total),
+        };
+    }
+    async findOne(id, companyId) {
+        const customer = await this.prisma.customer.findFirst({
+            where: { id, companyId, deletedAt: null },
+        });
+        if (!customer) {
+            throw new common_1.NotFoundException(`Customer with ID "${id}" not found`);
+        }
+        return customer;
+    }
+    async generateCustomerCode(companyId) {
+        const count = await this.prisma.customer.count({ where: { companyId } });
+        return `CUST-${String(count + 1).padStart(4, '0')}`;
+--
+            email: source.email,
+            address: source.address,
+            taxCode: source.taxCode,
+            note: source.note ?? source.notes,
+            isActive: source.isActive,
+            customerType: source.type,
+            contactPerson: source.contactPerson,
+            province: source.province,
+            projectName: source.projectName,
+            source: source.source,
+            crmStatus: source.status,
+            productNeeds: Array.isArray(source.productNeeds) ? JSON.stringify(source.productNeeds) : source.productNeeds,
+            estimatedArea: source.estimatedArea,
+            estimatedBudget: source.estimatedBudget,
+            nextFollowUpDate: source.nextFollowUpDate ? new Date(source.nextFollowUpDate) : undefined,
+            assignedToId: source.assignedToId || null,
+        };
+        Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
+        return data;
+    }
+    async create(companyId, userId, dto) {
+        const customer = await this.prisma.customer.create({
+            data: {
+                ...this.mapCustomerDto(dto, await this.generateCustomerCode(companyId)),
+                companyId,
+                createdById: userId,
+                updatedById: userId,
+            },
+        });
+        await this.auditLogService.log({
+            companyId,
+            userId,
+            action: 'CREATED',
+            entity: 'Customer',
+            entityId: customer.id,
+            newValue: JSON.stringify(customer),
+        });
+        return customer;
+    }
+    async update(id, companyId, userId, dto) {
+        const existing = await this.findOne(id, companyId);
+        const updated = await this.prisma.customer.update({
+            where: { id },
+            data: {
+                ...this.mapCustomerDto(dto),
+                updatedById: userId,

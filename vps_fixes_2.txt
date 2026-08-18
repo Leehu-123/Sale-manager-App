@@ -1,0 +1,24 @@
+=== FIXING USER ROLES ID DEFAULT ===
+ALTER TABLE
+ALTER TABLE
+=== PATCHING CORE API SCHEMA ===
+=== CHECKING SCHEMA ===
+  source          String?
+  assignedToId    String?   @map("assigned_to_id") @db.Uuid
+  crmStatus       String?   @map("crm_status")
+  productNeeds    String?   @map("product_needs")
+  estimatedArea   Float?    @map("estimated_area")
+  estimatedBudget Float?    @map("estimated_budget")
+  nextFollowUpDate DateTime? @map("next_follow_up_date")
+  assignedToId    String?    @map("assigned_to_id") @db.Uuid
+  crmStatus       String?    @default("NEW") @map("crm_status")
+  productNeeds    String?    @map("product_needs")
+  estimatedArea   Float?     @map("estimated_area")
+=== REGENERATING PRISMA CLIENT ===
+Prisma schema loaded from prisma/schema.prisma
+Error: 
+EACCES: permission denied, unlink '/app/node_modules/.prisma/client/index.js'
+
+
+=== RESTARTING CORE API ===
+core_api_app

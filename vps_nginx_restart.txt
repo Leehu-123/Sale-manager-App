@@ -1,0 +1,3 @@
+=== RESTARTING NGINX PROXY ===
+nginx_proxy
+b36e2f71e14f   jc21/nginx-proxy-manager:latest   "/init"                  2 days ago    Up 2 seconds   0.0.0.0:80-81->80-81/tcp, [::]:80-81->80-81/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp   nginx_proxy

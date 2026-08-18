@@ -1,0 +1,51 @@
+=== CHECKING FINAL LOGS ===
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quotes/:id, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quotes/:id/send, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quotes/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quotes/:id/hard, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSalesOrdersController {/orders}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id/confirm, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id/payments, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id/status, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id/cancel, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/orders/:id/hard, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSalesTasksController {/sales-tasks}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sales-tasks, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sales-tasks/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sales-tasks, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sales-tasks/:id, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sales-tasks/:id/complete, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sales-tasks/:id/cancel, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sales-tasks/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCustomerInteractionsController {/customer-interactions}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customer-interactions, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customer-interactions/customer/:customerId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customer-interactions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/customer-interactions/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mKpisController {/kpis}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpis, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpis/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpis/user/:userId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpis, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpis/:id, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpis/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mBusinessTripsController {/business-trips}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id/approve, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id/reject, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id/start, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id/reports, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id/reports, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/business-trips/:id/hard, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +109ms[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m🚀 Core API is running on: http://localhost:3003[39m
+[32m[Nest] 1  - [39m07/05/2026, 11:39:39 AM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m📖 Swagger docs: http://localhost:3003/docs[39m

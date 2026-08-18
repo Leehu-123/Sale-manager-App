@@ -1,0 +1,51 @@
+=== CHECKING VERY FINAL LOGS ===
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/departments/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/departments/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/departments/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDafaTasksController {/dafa-tasks}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks/dashboard-stats, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks/:id/comments, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks/:id/attachments, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks/:id/attachments/:attachmentId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/dafa-tasks/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mKpiCriteriaController {/kpi-criteria}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-criteria, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-criteria, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-criteria/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-criteria/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-criteria/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mKpiRecordsController {/kpi-records}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/bulk, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/approve, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/delete-sheet, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/sheet, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/pending, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/kpi-records/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWorkReportsController {/work-reports}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/work-reports, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/work-reports, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/work-reports/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/work-reports/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/work-reports/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mReportTemplatesController {/report-templates}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/report-templates, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/report-templates, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/report-templates/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/report-templates/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/report-templates/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCompanyDocumentsController {/company-documents}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/company-documents, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/company-documents, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/company-documents/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +193ms[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m🚀 Core API is running on: http://localhost:3003[39m
+[32m[Nest] 1  - [39m08/06/2026, 2:30:04 AM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m📖 Swagger docs: http://localhost:3003/docs[39m
+[32m[Nest] 1  - [39m08/07/2026, 1:00:00 AM [32m    LOG[39m [38;5;3m[CronsService] [39m[32mBắt đầu chạy Cron nhắc việc định kỳ...[39m

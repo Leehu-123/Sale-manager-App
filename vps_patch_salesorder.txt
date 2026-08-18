@@ -1,0 +1,395 @@
+SalesOrder patched successfully.
+time="2026-07-05T19:01:32+07:00" level=warning msg="/var/www/Core-API/docker-compose.prod.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+time="2026-07-05T19:01:32+07:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [core_api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.29kB done
+#1 DONE 0.0s
+
+#2 [core_api internal] load metadata for docker.io/library/node:20-slim
+#2 DONE 0.1s
+
+#3 [core_api internal] load .dockerignore
+#3 transferring context: 149B done
+#3 DONE 0.0s
+
+#4 [core_api internal] load build context
+#4 DONE 0.0s
+
+#5 [core_api builder 1/8] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+#5 resolve docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 0.1s done
+#5 DONE 0.1s
+
+#5 [core_api builder 1/8] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+#5 CACHED
+
+#6 [core_api builder 2/8] WORKDIR /app
+#6 CACHED
+
+#4 [core_api internal] load build context
+#4 transferring context: 59.23kB 0.1s done
+#4 DONE 0.1s
+
+#7 [core_api builder 3/8] COPY package*.json ./
+#7 DONE 0.1s
+
+#8 [core_api production  2/11] RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+#8 ...
+
+#9 [core_api builder 4/8] COPY prisma ./prisma/
+#9 DONE 0.2s
+
+#8 [core_api production  2/11] RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+#8 0.579 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#8 0.703 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#8 0.773 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+#8 1.012 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#8 ...
+
+#10 [core_api builder 5/8] RUN npm ci
+#10 7.334 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+#10 7.945 npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+#10 9.399 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+#10 10.43 npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#10 10.65 npm warn deprecated gauge@3.0.2: This package is no longer supported.
+#10 11.16 npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+#10 ...
+
+#8 [core_api production  2/11] RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+#8 13.60 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#8 13.60 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [316 kB]
+#8 15.08 Fetched 9367 kB in 15s (640 kB/s)
+#8 15.08 Reading package lists...
+#8 16.18 Reading package lists...
+#8 17.22 Building dependency tree...
+#8 17.53 Reading state information...
+#8 17.89 The following additional packages will be installed:
+#8 17.89   krb5-locales libgdbm-compat4 libgdbm6 libgssapi-krb5-2 libk5crypto3
+#8 17.89   libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0 libldap-common
+#8 17.89   libperl5.36 libpq5 libreadline8 libsasl2-2 libsasl2-modules
+#8 17.90   libsasl2-modules-db libssl3 netbase perl perl-modules-5.36
+#8 17.90   postgresql-client-15 postgresql-client-common readline-common sensible-utils
+#8 17.90 Suggested packages:
+#8 17.90   gdbm-l10n krb5-doc krb5-user libsasl2-modules-gssapi-mit
+#8 17.90   | libsasl2-modules-gssapi-heimdal libsasl2-modules-ldap libsasl2-modules-otp
+#8 17.90   libsasl2-modules-sql perl-doc libterm-readline-gnu-perl
+#8 17.90   | libterm-readline-perl-perl make libtap-harness-archive-perl postgresql-15
+#8 17.90   postgresql-doc-15 readline-doc
+#8 18.10 The following NEW packages will be installed:
+#8 18.10   krb5-locales libgdbm-compat4 libgdbm6 libgssapi-krb5-2 libk5crypto3
+#8 18.10   libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0 libldap-common
+#8 18.10   libperl5.36 libpq5 libreadline8 libsasl2-2 libsasl2-modules
+#8 18.10   libsasl2-modules-db libssl3 netbase perl perl-modules-5.36 postgresql-client
+#8 18.10   postgresql-client-15 postgresql-client-common readline-common sensible-utils
+#8 18.24 0 upgraded, 25 newly installed, 0 to remove and 12 not upgraded.
+#8 18.24 Need to get 12.7 MB of archives.
+#8 18.24 After this operation, 68.5 MB of additional disk space will be used.
+#8 18.24 Get:1 http://deb.debian.org/debian bookworm/main amd64 perl-modules-5.36 all 5.36.0-7+deb12u3 [2815 kB]
+#8 18.58 Get:2 http://deb.debian.org/debian bookworm/main amd64 libgdbm6 amd64 1.23-3 [72.2 kB]
+#8 18.58 Get:3 http://deb.debian.org/debian bookworm/main amd64 libgdbm-compat4 amd64 1.23-3 [48.2 kB]
+#8 18.58 Get:4 http://deb.debian.org/debian bookworm/main amd64 libperl5.36 amd64 5.36.0-7+deb12u3 [4196 kB]
+#8 19.04 Get:5 http://deb.debian.org/debian bookworm/main amd64 perl amd64 5.36.0-7+deb12u3 [239 kB]
+#8 19.11 Get:6 http://deb.debian.org/debian bookworm/main amd64 netbase all 6.4 [12.8 kB]
+#8 19.11 Get:7 http://deb.debian.org/debian bookworm/main amd64 readline-common all 8.2-1.3 [69.0 kB]
+#8 19.13 Get:8 http://deb.debian.org/debian bookworm/main amd64 sensible-utils all 0.0.17+nmu1 [19.0 kB]
+#8 19.14 Get:9 http://deb.debian.org/debian-security bookworm-security/main amd64 krb5-locales all 1.20.1-2+deb12u5 [63.5 kB]
+#8 19.17 Get:10 http://deb.debian.org/debian-security bookworm-security/main amd64 libkrb5support0 amd64 1.20.1-2+deb12u5 [33.2 kB]
+#8 19.18 Get:11 http://deb.debian.org/debian-security bookworm-security/main amd64 libk5crypto3 amd64 1.20.1-2+deb12u5 [79.7 kB]
+#8 19.20 Get:12 http://deb.debian.org/debian bookworm/main amd64 libkeyutils1 amd64 1.6.3-2 [8808 B]
+#8 19.21 Get:13 http://deb.debian.org/debian-security bookworm-security/main amd64 libssl3 amd64 3.0.20-1~deb12u2 [2036 kB]
+#8 21.96 Get:14 http://deb.debian.org/debian-security bookworm-security/main amd64 libkrb5-3 amd64 1.20.1-2+deb12u5 [332 kB]
+#8 22.89 Get:15 http://deb.debian.org/debian-security bookworm-security/main amd64 libgssapi-krb5-2 amd64 1.20.1-2+deb12u5 [135 kB]
+#8 23.20 Get:16 http://deb.debian.org/debian bookworm/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10 [20.3 kB]
+#8 23.24 Get:17 http://deb.debian.org/debian bookworm/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10 [59.7 kB]
+#8 23.44 Get:18 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
+#8 23.70 Get:19 http://deb.debian.org/debian bookworm/main amd64 libldap-common all 2.5.13+dfsg-5 [29.3 kB]
+#8 23.74 Get:20 http://deb.debian.org/debian-security bookworm-security/main amd64 libpq5 amd64 15.18-0+deb12u1 [197 kB]
+#8 23.95 Get:21 http://deb.debian.org/debian bookworm/main amd64 libreadline8 amd64 8.2-1.3 [166 kB]
+#8 24.09 Get:22 http://deb.debian.org/debian bookworm/main amd64 libsasl2-modules amd64 2.1.28+dfsg-10 [66.6 kB]
+#8 24.14 Get:23 http://deb.debian.org/debian bookworm/main amd64 postgresql-client-common all 248+deb12u1 [35.2 kB]
+#8 24.17 Get:24 http://deb.debian.org/debian-security bookworm-security/main amd64 postgresql-client-15 amd64 15.18-0+deb12u1 [1747 kB]
+#8 ...
+
+#10 [core_api builder 5/8] RUN npm ci
+#10 13.73 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#10 14.03 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#10 14.14 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#10 14.20 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#10 14.68 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#10 16.00 npm warn deprecated glob@10.4.5: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#10 17.26 npm warn deprecated uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+#10 17.32 npm warn deprecated uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+#10 ...
+
+#8 [core_api production  2/11] RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+#8 25.33 Get:25 http://deb.debian.org/debian bookworm/main amd64 postgresql-client all 15+248+deb12u1 [10.2 kB]
+#8 25.88 debconf: delaying package configuration, since apt-utils is not installed
+#8 25.99 Fetched 12.7 MB in 7s (1757 kB/s)
+#8 26.05 Selecting previously unselected package perl-modules-5.36.
+#8 26.05 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6096 files and directories currently installed.)
+#8 26.07 Preparing to unpack .../00-perl-modules-5.36_5.36.0-7+deb12u3_all.deb ...
+#8 26.09 Unpacking perl-modules-5.36 (5.36.0-7+deb12u3) ...
+#8 26.92 Selecting previously unselected package libgdbm6:amd64.
+#8 26.92 Preparing to unpack .../01-libgdbm6_1.23-3_amd64.deb ...
+#8 26.96 Unpacking libgdbm6:amd64 (1.23-3) ...
+#8 27.09 Selecting previously unselected package libgdbm-compat4:amd64.
+#8 27.09 Preparing to unpack .../02-libgdbm-compat4_1.23-3_amd64.deb ...
+#8 27.10 Unpacking libgdbm-compat4:amd64 (1.23-3) ...
+#8 27.22 Selecting previously unselected package libperl5.36:amd64.
+#8 27.22 Preparing to unpack .../03-libperl5.36_5.36.0-7+deb12u3_amd64.deb ...
+#8 27.23 Unpacking libperl5.36:amd64 (5.36.0-7+deb12u3) ...
+#8 28.85 Selecting previously unselected package perl.
+#8 28.86 Preparing to unpack .../04-perl_5.36.0-7+deb12u3_amd64.deb ...
+#8 28.92 Unpacking perl (5.36.0-7+deb12u3) ...
+#8 29.12 Selecting previously unselected package netbase.
+#8 29.12 Preparing to unpack .../05-netbase_6.4_all.deb ...
+#8 29.14 Unpacking netbase (6.4) ...
+#8 29.23 Selecting previously unselected package readline-common.
+#8 29.23 Preparing to unpack .../06-readline-common_8.2-1.3_all.deb ...
+#8 29.25 Unpacking readline-common (8.2-1.3) ...
+#8 29.34 Selecting previously unselected package sensible-utils.
+#8 29.35 Preparing to unpack .../07-sensible-utils_0.0.17+nmu1_all.deb ...
+#8 29.36 Unpacking sensible-utils (0.0.17+nmu1) ...
+#8 29.43 Selecting previously unselected package krb5-locales.
+#8 29.43 Preparing to unpack .../08-krb5-locales_1.20.1-2+deb12u5_all.deb ...
+#8 29.44 Unpacking krb5-locales (1.20.1-2+deb12u5) ...
+#8 29.55 Selecting previously unselected package libkrb5support0:amd64.
+#8 29.55 Preparing to unpack .../09-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
+#8 29.56 Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#8 29.66 Selecting previously unselected package libk5crypto3:amd64.
+#8 29.66 Preparing to unpack .../10-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
+#8 29.67 Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#8 29.77 Selecting previously unselected package libkeyutils1:amd64.
+#8 29.77 Preparing to unpack .../11-libkeyutils1_1.6.3-2_amd64.deb ...
+#8 29.78 Unpacking libkeyutils1:amd64 (1.6.3-2) ...
+#8 29.88 Selecting previously unselected package libssl3:amd64.
+#8 29.88 Preparing to unpack .../12-libssl3_3.0.20-1~deb12u2_amd64.deb ...
+#8 29.89 Unpacking libssl3:amd64 (3.0.20-1~deb12u2) ...
+#8 30.26 Selecting previously unselected package libkrb5-3:amd64.
+#8 30.26 Preparing to unpack .../13-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
+#8 30.28 Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#8 30.44 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#8 30.44 Preparing to unpack .../14-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+#8 30.46 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#8 30.55 Selecting previously unselected package libsasl2-modules-db:amd64.
+#8 30.55 Preparing to unpack .../15-libsasl2-modules-db_2.1.28+dfsg-10_amd64.deb ...
+#8 30.56 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+#8 30.66 Selecting previously unselected package libsasl2-2:amd64.
+#8 30.66 Preparing to unpack .../16-libsasl2-2_2.1.28+dfsg-10_amd64.deb ...
+#8 30.67 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+#8 30.77 Selecting previously unselected package libldap-2.5-0:amd64.
+#8 30.77 Preparing to unpack .../17-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+#8 30.78 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#8 30.92 Selecting previously unselected package libldap-common.
+#8 30.92 Preparing to unpack .../18-libldap-common_2.5.13+dfsg-5_all.deb ...
+#8 30.94 Unpacking libldap-common (2.5.13+dfsg-5) ...
+#8 31.07 Selecting previously unselected package libpq5:amd64.
+#8 31.07 Preparing to unpack .../19-libpq5_15.18-0+deb12u1_amd64.deb ...
+#8 31.09 Unpacking libpq5:amd64 (15.18-0+deb12u1) ...
+#8 31.51 Selecting previously unselected package libreadline8:amd64.
+#8 31.51 Preparing to unpack .../20-libreadline8_8.2-1.3_amd64.deb ...
+#8 31.52 Unpacking libreadline8:amd64 (8.2-1.3) ...
+#8 31.78 Selecting previously unselected package libsasl2-modules:amd64.
+#8 31.78 Preparing to unpack .../21-libsasl2-modules_2.1.28+dfsg-10_amd64.deb ...
+#8 31.83 Unpacking libsasl2-modules:amd64 (2.1.28+dfsg-10) ...
+#8 32.02 Selecting previously unselected package postgresql-client-common.
+#8 32.03 Preparing to unpack .../22-postgresql-client-common_248+deb12u1_all.deb ...
+#8 32.04 Unpacking postgresql-client-common (248+deb12u1) ...
+#8 32.16 Selecting previously unselected package postgresql-client-15.
+#8 32.17 Preparing to unpack .../23-postgresql-client-15_15.18-0+deb12u1_amd64.deb ...
+#8 32.19 Unpacking postgresql-client-15 (15.18-0+deb12u1) ...
+#8 33.02 Selecting previously unselected package postgresql-client.
+#8 33.02 Preparing to unpack .../24-postgresql-client_15+248+deb12u1_all.deb ...
+#8 33.04 Unpacking postgresql-client (15+248+deb12u1) ...
+#8 33.27 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+#8 33.31 Setting up libssl3:amd64 (3.0.20-1~deb12u2) ...
+#8 33.36 Setting up krb5-locales (1.20.1-2+deb12u5) ...
+#8 33.41 Setting up libldap-common (2.5.13+dfsg-5) ...
+#8 33.46 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#8 33.49 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+#8 33.53 Setting up perl-modules-5.36 (5.36.0-7+deb12u3) ...
+#8 33.57 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#8 33.60 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+#8 33.63 Setting up sensible-utils (0.0.17+nmu1) ...
+#8 33.67 Setting up netbase (6.4) ...
+#8 33.77 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#8 33.81 Setting up readline-common (8.2-1.3) ...
+#8 33.86 Setting up libgdbm6:amd64 (1.23-3) ...
+#8 33.90 Setting up libreadline8:amd64 (8.2-1.3) ...
+#8 33.94 Setting up libsasl2-modules:amd64 (2.1.28+dfsg-10) ...
+#8 34.00 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#8 34.04 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#8 34.08 Setting up libgdbm-compat4:amd64 (1.23-3) ...
+#8 34.12 Setting up libperl5.36:amd64 (5.36.0-7+deb12u3) ...
+#8 34.15 Setting up libpq5:amd64 (15.18-0+deb12u1) ...
+#8 34.19 Setting up perl (5.36.0-7+deb12u3) ...
+#8 34.26 Setting up postgresql-client-common (248+deb12u1) ...
+#8 34.32 Setting up postgresql-client-15 (15.18-0+deb12u1) ...
+#8 35.58 update-alternatives: using /usr/share/postgresql/15/man/man1/psql.1.gz to provide /usr/share/man/man1/psql.1.gz (psql.1.gz) in auto mode
+#8 35.68 Setting up postgresql-client (15+248+deb12u1) ...
+#8 35.73 Processing triggers for libc-bin (2.36-9+deb12u13) ...
+#8 DONE 38.0s
+
+#10 [core_api builder 5/8] RUN npm ci
+#10 ...
+
+#11 [core_api production  3/11] WORKDIR /app
+#11 DONE 0.3s
+
+#10 [core_api builder 5/8] RUN npm ci
+#10 ...
+
+#12 [core_api production  4/11] RUN groupadd -g 1001 appgroup &&     useradd -u 1001 -g appgroup -s /bin/false -m appuser
+#12 DONE 0.8s
+
+#10 [core_api builder 5/8] RUN npm ci
+#10 ...
+
+#13 [core_api production  5/11] COPY package*.json ./
+#13 DONE 0.9s
+
+#10 [core_api builder 5/8] RUN npm ci
+#10 ...
+
+#14 [core_api production  6/11] RUN npm ci --only=production
+#14 0.874 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+#14 6.674 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+#14 7.843 npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+#14 7.854 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+#14 8.811 npm warn deprecated gauge@3.0.2: This package is no longer supported.
+#14 8.822 npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+#14 9.248 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#14 10.21 npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#14 10.68 npm warn deprecated uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+#14 10.71 npm warn deprecated uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+#14 ...
+
+#10 [core_api builder 5/8] RUN npm ci
+#10 50.44 
+#10 50.44 added 824 packages, and audited 825 packages in 50s
+#10 50.44 
+#10 50.44 141 packages are looking for funding
+#10 50.44   run `npm fund` for details
+#10 50.81 
+#10 50.81 33 vulnerabilities (3 low, 20 moderate, 10 high)
+#10 50.81 
+#10 50.81 To address issues that do not require attention, run:
+#10 50.81   npm audit fix
+#10 50.81 
+#10 50.81 To address all issues (including breaking changes), run:
+#10 50.81   npm audit fix --force
+#10 50.81 
+#10 50.81 Run `npm audit` for details.
+#10 50.81 npm notice
+#10 50.81 npm notice New major version of npm available! 10.8.2 -> 11.18.0
+#10 50.81 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.18.0
+#10 50.81 npm notice To update run: npm install -g npm@11.18.0
+#10 50.81 npm notice
+#10 DONE 52.3s
+
+#14 [core_api production  6/11] RUN npm ci --only=production
+#14 ...
+
+#15 [core_api builder 6/8] RUN npx prisma generate
+#15 2.869 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#15 2.869 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#15 3.370 Prisma schema loaded from prisma/schema.prisma
+#15 3.618 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#15 3.618 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#15 7.219 
+#15 7.219 ✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 1.45s
+#15 7.219 
+#15 7.219 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#15 7.219 
+#15 7.219 Help us improve the Prisma ORM for everyone. Share your feedback in a short 2-min survey: https://pris.ly/orm/survey/release-5-22
+#15 7.219 
+#15 DONE 8.5s
+
+#14 [core_api production  6/11] RUN npm ci --only=production
+#14 ...
+
+#16 [core_api builder 7/8] COPY . .
+#16 DONE 0.7s
+
+#14 [core_api production  6/11] RUN npm ci --only=production
+#14 ...
+
+#17 [core_api builder 8/8] RUN npm run build
+#17 0.887 
+#17 0.887 > core-api@1.0.0 build
+#17 0.887 > nest build
+#17 0.887 
+#17 ...
+
+#14 [core_api production  6/11] RUN npm ci --only=production
+#14 26.55 
+#14 26.55 added 247 packages, and audited 248 packages in 26s
+#14 26.55 
+#14 26.55 38 packages are looking for funding
+#14 26.55   run `npm fund` for details
+#14 26.66 npm notice
+#14 26.66 npm notice New major version of npm available! 10.8.2 -> 11.18.0
+#14 26.66 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.18.0
+#14 26.66 npm notice To update run: npm install -g npm@11.18.0
+#14 26.66 npm notice
+#14 26.66 
+#14 26.66 20 vulnerabilities (14 moderate, 6 high)
+#14 26.66 
+#14 26.66 To address issues that do not require attention, run:
+#14 26.66   npm audit fix
+#14 26.66 
+#14 26.66 To address all issues (including breaking changes), run:
+#14 26.66   npm audit fix --force
+#14 26.66 
+#14 26.66 Run `npm audit` for details.
+#14 DONE 27.2s
+
+#18 [core_api production  7/11] COPY prisma ./prisma/
+#18 DONE 0.6s
+
+#17 [core_api builder 8/8] RUN npm run build
+#17 ...
+
+#19 [core_api production  8/11] RUN npx prisma generate
+#19 2.313 Prisma schema loaded from prisma/schema.prisma
+#19 6.281 
+#19 6.281 ✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 1.79s
+#19 6.281 
+#19 6.281 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#19 6.281 
+#19 6.281 Tip: Want to react to database changes in your app as they happen? Discover how with Pulse: https://pris.ly/tip-1-pulse
+#19 6.281 
+#19 DONE 6.7s
+
+#17 [core_api builder 8/8] RUN npm run build
+#17 22.39 [96msrc/modules/customer-interactions/customer-interactions.service.ts[0m:[93m74[0m:[93m9[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'nextFollowUpDate' does not exist in type 'Without<CustomerInteractionCreateInput, CustomerInteractionUncheckedCreateInput> & CustomerInteractionUncheckedCreateInput'.
+#17 22.39 
+#17 22.39 [7m74[0m         nextFollowUpDate: dto.nextFollowUpDate ? new Date(dto.nextFollowUpDate) : undefined,
+#17 22.39 [7m  [0m [91m        ~~~~~~~~~~~~~~~~[0m
+#17 22.39 
+#17 22.39   [96mnode_modules/.prisma/client/index.d.ts[0m:[93m38448[0m:[93m5[0m
+#17 22.39     [7m38448[0m     data: XOR<CustomerInteractionCreateInput, CustomerInteractionUncheckedCreateInput>
+#17 22.39     [7m     [0m [96m    ~~~~[0m
+#17 22.39     The expected type comes from property 'data' which is declared here on type '{ select?: CustomerInteractionSelect<DefaultArgs> | null | undefined; include?: CustomerInteractionInclude<DefaultArgs> | null | undefined; data: (Without<...> & CustomerInteractionUncheckedCreateInput) | (Without<...> & CustomerInteractionCreateInput); }'
+#17 22.39 
+#17 22.39 Found 1 error(s).
+#17 22.39 
+#17 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+------
+ > [core_api builder 8/8] RUN npm run build:
+22.39 [7m74[0m         nextFollowUpDate: dto.nextFollowUpDate ? new Date(dto.nextFollowUpDate) : undefined,
+22.39 [7m  [0m [91m        ~~~~~~~~~~~~~~~~[0m
+22.39 
+22.39   [96mnode_modules/.prisma/client/index.d.ts[0m:[93m38448[0m:[93m5[0m
+22.39     [7m38448[0m     data: XOR<CustomerInteractionCreateInput, CustomerInteractionUncheckedCreateInput>
+22.39     [7m     [0m [96m    ~~~~[0m
+22.39     The expected type comes from property 'data' which is declared here on type '{ select?: CustomerInteractionSelect<DefaultArgs> | null | undefined; include?: CustomerInteractionInclude<DefaultArgs> | null | undefined; data: (Without<...> & CustomerInteractionUncheckedCreateInput) | (Without<...> & CustomerInteractionCreateInput); }'
+22.39 
+22.39 Found 1 error(s).
+22.39 
+------
+failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+time="2026-07-05T19:02:57+07:00" level=warning msg="/var/www/Core-API/docker-compose.prod.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Container core_api_app  Running
+nginx_proxy

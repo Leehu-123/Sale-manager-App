@@ -1,0 +1,46 @@
+=== RESTORING SCHEMA ===
+cp: cannot stat '/app/prisma/schema.prisma.bak': No such file or directory
+=== CHECKING SCHEMA AGAIN ===
+model Customer {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  code      String
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  taxCode   String?  @map("tax_code")
+  note      String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdById String? @map("created_by_id") @db.Uuid
+  updatedById     String?    @map("updated_by_id") @db.Uuid
+  customerType    String?    @map("customer_type")
+  contactPerson   String?    @map("contact_person")
+  province        String?
+  projectName     String?    @map("project_name")
+  source          String?
+--
+model CustomerInteraction {
+  id               String    @id @default(uuid()) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  customerId       String    @map("customer_id") @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  type             String
+  content          String
+  result           String?
+  nextFollowUpDate DateTime? @map("next_follow_up_date")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([customerId])
+  @@index([userId])
+  @@map("customer_interactions")
+}
+
+model Opportunity {
+  id                String    @id @default(uuid()) @db.Uuid

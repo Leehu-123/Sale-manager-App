@@ -1,0 +1,64 @@
+=== Docker containers status ===
+NAMES                   STATUS                          IMAGE
+core_api_app            Up 10 days                      ghcr.io/leehu-123/core-api:latest
+dafa_manager_app        Up 11 days                      ghcr.io/leehu-123/dafa-manager-app:latest
+sale_manager_app        Up 2 weeks                      ghcr.io/leehu-123/sale-manager-app:latest
+warehouse_manager_app   Up 2 weeks                      ghcr.io/leehu-123/warehouse-manager-app:latest
+watchtower              Restarting (1) 30 seconds ago   containrrr/watchtower
+postgres_db             Up 4 weeks                      postgres:15-alpine
+nginx_proxy             Up 10 days                      jc21/nginx-proxy-manager:latest
+
+=== Core API git log on VPS ===
+5b23922 fix: exclude test-cron.ts to fix dist build error
+dbd5636 feat: Update task attachments API, add company documents and telegram announcements
+0f9b0b7 Fix: expand allowed upload file types
+5f29d20 feat(trips): add 2-step accountant approval flow
+86eaba4 Fix TypeScript build errors
+b76f64b Fix cron status query
+27cd16a Implement anti-spam debounce & daily task reminders
+997aab6  Feat: Add description latitude longitude to Customer model and DTOs
+72f6b41  fix: repair kpi records ts compilation error and ensure clean production build
+5fb9bb2  chore: enable direct local build in docker-compose.prod.yml
+
+=== Sale App git log on VPS ===
+2aeb997 feat: use accountant personal chat id
+947f2d9 fix(sidebar): add ACCOUNTANT role to trips menu
+da079d6 feat(trips): add 2-step accountant approval UI and telegram configs
+0e5047f  Feat: Fix location tracking add customer GPS location and description fields
+11c7676  Feat: Cloudflare R2 upload Telegram notifications employee profile page and trip deletion
+6276c1d fix: hide customer actions for viewer role
+6f29519 Fix build args
+2abe684 Add GitHub Actions deploy workflow
+c05ccf9 fix: implement multi-role scope, fix customer toggle & export csv
+77b56ee Fix bugs and updates
+
+=== Core API inventory.controller.ts on VPS ===
+32:  @Get('available-stock')
+37:  getAvailableStock(@CurrentUser() user: JwtPayload, @Query('productId') productId?: string, @Query('asOfDate') asOfDate?: string) {
+38:    return this.inventoryService.getAvailableStock(user.companyId, productId, asOfDate);
+
+=== Core API business-trips.service.ts telegram check ===
+8:import { TelegramService } from '../telegram/telegram.service';
+16:    private readonly telegram: TelegramService,
+324:    const telegramMsg = [
+332:    this.telegram.notifyAdmins(companyId, telegramMsg).catch(console.error);
+
+=== Sale App quotes/create/page.tsx stock check ===
+
+=== Sale App running container info ===
+{"com.docker.compose.config-hash":"ceebf10915757d14ea723b68f3b0d59f942fff6890e0dbc3e798df6aeec30a24","com.docker.compose.container-number":"1","com.docker.compose.depends_on":"","com.docker.compose.image":"sha256:8cdf21e623305d889e878f0179b7e91333f214b8bfa9915736df4dd5c262d7fa","com.docker.compose.oneoff":"False","com.docker.compose.project":"sale-manager-app","com.docker.compose.project.config_files":"/var/www/Sale-manager-App/docker-compose.prod.yml","com.docker.compose.project.working_dir":"/var/www/Sale-manager-App","com.docker.compose.replace":"sale_manager_app","com.docker.compose.service":"web_app","com.docker.compose.version":"2.40.3"}
+=== Sale App image info ===
+Image: sha256:8cdf21e623305d889e878f0179b7e91333f214b8bfa9915736df4dd5c262d7fa
+=== Last deploy date (Core API image) ===
+Created: 2026-08-07T02:43:52.564396775Z
+=== IncomingShipment table in DB ===
+       now        
+------------------
+ 2026-08-18 01:01
+(1 row)
+
+ count 
+-------
+     0
+(1 row)
+

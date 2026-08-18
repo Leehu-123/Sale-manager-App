@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { getInitials, ROLE_LABELS } from '@/lib/utils'
+import { apiClient } from '@/lib/api-client'
 import {
   Bell,
   Search,
@@ -13,6 +14,7 @@ import {
   Settings,
   ChevronDown,
   Menu,
+  CheckCheck,
 } from 'lucide-react'
 
 const pageTitles: Record<string, string> = {
@@ -42,12 +44,26 @@ function getBreadcrumbs(pathname: string): { label: string; href?: string }[] {
   return crumbs
 }
 
+interface AppNotification {
+  id: string
+  title: string
+  message: string
+  linkUrl?: string
+  isRead: boolean
+  createdAt: string
+}
+
 export function Topbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
+  const [showNotif, setShowNotif] = useState(false)
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const userName = session?.user?.name || 'Người dùng'
   const userEmail = session?.user?.email || ''
@@ -56,15 +72,57 @@ export function Topbar() {
   const title = pageTitles[pathname] || pageTitles['/' + pathname.split('/')[1]] || 'Dafa Sales'
   const breadcrumbs = getBreadcrumbs(pathname)
 
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/notifications?limit=20')
+      const data = res?.data || res
+      setNotifications(data?.notifications || [])
+      setUnreadCount(data?.unreadCount || 0)
+    } catch {
+      // Ignore errors silently
+    }
+  }, [])
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchNotifications()
+      // Poll mỗi 60 giây
+      const interval = setInterval(fetchNotifications, 60000)
+      return () => clearInterval(interval)
+    }
+  }, [session, fetchNotifications])
+
+  const handleNotifClick = async (notif: AppNotification) => {
+    if (!notif.isRead) {
+      await apiClient.patch(`/notifications/${notif.id}/read`, {}).catch(() => {})
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    }
+    setShowNotif(false)
+    if (notif.linkUrl) {
+      router.push(notif.linkUrl)
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    await apiClient.patch('/notifications/read-all', {}).catch(() => {})
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    setUnreadCount(0)
+  }
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowDropdown(false)
       }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotif(false)
+      }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
 
   return (
     <header className="h-16 bg-white border-b border-surface-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shrink-0 print:hidden">
@@ -127,24 +185,51 @@ export function Topbar() {
         )}
 
         {/* Notifications */}
-        <div className="relative">
-          <button 
+        <div className="relative" ref={notifRef}>
+          <button
             className="p-2 rounded-lg hover:bg-surface-200 transition-colors duration-200 text-surface-400 relative"
-            onClick={() => {
-              const el = document.getElementById('noti-dropdown')
-              if (el) el.classList.toggle('hidden')
-            }}
+            onClick={() => { setShowNotif(v => !v); if (!showNotif) fetchNotifications(); }}
           >
             <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </button>
-          <div id="noti-dropdown" className="hidden absolute right-0 top-full mt-1 w-64 bg-white rounded-xl shadow-lg border border-surface-200 py-2 z-50">
-            <div className="px-4 py-2 border-b border-surface-100">
-              <p className="text-sm font-semibold text-surface-900">Thông báo</p>
+
+          {showNotif && (
+            <div className="absolute right-0 top-full mt-1 w-80 bg-white rounded-xl shadow-lg border border-surface-200 py-0 z-50 max-h-[480px] flex flex-col">
+              <div className="px-4 py-2.5 border-b border-surface-100 flex items-center justify-between shrink-0">
+                <p className="text-sm font-semibold text-surface-900">Thông báo {unreadCount > 0 && <span className="text-red-500">({unreadCount})</span>}</p>
+                {unreadCount > 0 && (
+                  <button onClick={handleMarkAllRead} className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700">
+                    <CheckCheck size={12} /> Đọc tất cả
+                  </button>
+                )}
+              </div>
+              <div className="overflow-y-auto flex-1">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-surface-500 text-sm">Không có thông báo nào</div>
+                ) : (
+                  notifications.map(notif => (
+                    <button
+                      key={notif.id}
+                      onClick={() => handleNotifClick(notif)}
+                      className={`w-full text-left px-4 py-3 border-b border-surface-50 hover:bg-surface-50 transition-colors flex gap-3 items-start ${!notif.isRead ? 'bg-brand-50' : ''}`}
+                    >
+                      <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-brand-500' : 'bg-transparent'}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-semibold truncate ${!notif.isRead ? 'text-surface-900' : 'text-surface-600'}`}>{notif.title}</p>
+                        <p className="text-[11px] text-surface-500 mt-0.5 line-clamp-2">{notif.message}</p>
+                        <p className="text-[10px] text-surface-400 mt-1">{new Date(notif.createdAt).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
-            <div className="px-4 py-6 text-center text-surface-500 text-sm">
-              Không có thông báo mới
-            </div>
-          </div>
+          )}
         </div>
 
         {/* User dropdown */}

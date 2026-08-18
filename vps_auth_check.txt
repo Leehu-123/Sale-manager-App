@@ -1,0 +1,42 @@
+=== CORE API - Auth Login ===
+/app/dist/modules/auth/auth.service.js
+/app/dist/modules/auth/auth.service.js.map
+/app/dist/modules/auth/auth.service.d.ts
+                ipAddress,
+                userAgent,
+            });
+            throw new common_1.UnauthorizedException('Account is inactive');
+        }
+        const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+        if (!isPasswordValid) {
+            await this.auditLogService.log({
+                companyId: user.companyId,
+                userId: user.id,
+                action: 'LOGIN_FAILED',
+                entity: 'User',
+                entityId: user.id,
+                newValue: { reason: 'Invalid password' },
+                ipAddress,
+                userAgent,
+            });
+            throw new common_1.UnauthorizedException('Invalid email or password');
+        }
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+        });
+        const roles = user.userRoles.map((ur) => ur.role.name);
+        const permissions = [
+            ...new Set(user.userRoles.flatMap((ur) => ur.role.rolePermissions.map((rp) => rp.permission.name))),
+=== CORE API - bcrypt salt ===
+/app/dist/modules/auth/auth.service.js:const bcrypt = __importStar(require("bcrypt"));
+/app/dist/modules/auth/auth.service.js:        const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+/app/dist/modules/auth/auth.service.js:        const passwordHash = await bcrypt.hash(dto.password, 12);
+/app/dist/modules/auth/auth.service.js:        const passwordHash = await bcrypt.hash(dto.password, 12);
+=== USERS in DB ===
+     email     |         password_hash         | is_active 
+---------------+-------------------------------+-----------
+ admin@dafa.vn | a2/huvUKnYgwdf6/17H3NtVl9JqmO | t
+(1 row)
+
+=== LOGS CORE API ===
