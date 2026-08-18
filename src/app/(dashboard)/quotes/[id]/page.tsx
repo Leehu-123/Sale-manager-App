@@ -44,6 +44,7 @@ export default function QuoteDetailPage() {
   const [terms, setTerms] = useState('')
   const [notes, setNotes] = useState('')
   const [settings, setSettings] = useState<Record<string, string>>({})
+  const [stockMap, setStockMap] = useState<Record<string, { physicalStock: number; reservedStock: number; availableStock: number }>>({})
 
   useEffect(() => {
     const extractArray = (res: any) => {
@@ -59,8 +60,9 @@ export default function QuoteDetailPage() {
     Promise.all([
       apiClient.get(`/quotes/${params.id}`),
       apiClient.get('/products?page=1&limit=100'),
-      fetch('/api/settings').then(res => res.json()).catch(() => ({}))
-    ]).then(([quoteRes, productsData, settingsData]) => {
+      fetch('/api/settings').then(res => res.json()).catch(() => ({})),
+      apiClient.get('/inventory/available-stock').catch(() => null),
+    ]).then(([quoteRes, productsData, settingsData, stockData]) => {
       const quoteData = quoteRes.data || quoteRes;
       setQuote(quoteData)
       setItems(quoteData.items || [])
@@ -72,6 +74,19 @@ export default function QuoteDetailPage() {
       setNotes(quoteData.notes || '')
       setProducts(extractArray(productsData))
       setSettings(settingsData?.data || settingsData || {})
+      // Build stock map
+      const stockArray = extractArray(stockData);
+      const sMap: Record<string, { physicalStock: number; reservedStock: number; availableStock: number }> = {};
+      stockArray.forEach((item: any) => {
+        if (item.productId) {
+          sMap[item.productId] = {
+            physicalStock: item.physicalStock || 0,
+            reservedStock: item.reservedStock || 0,
+            availableStock: item.availableStock || 0,
+          };
+        }
+      });
+      setStockMap(sMap);
     }).catch(console.error).finally(() => setLoading(false))
   }, [params.id])
 
@@ -306,6 +321,11 @@ export default function QuoteDetailPage() {
                       <option value="">Chọn SP</option>
                       {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} - ${p.name}` : p.name}</option>)}
                     </select>
+                    {item.productId && stockMap[item.productId] && (
+                      <div className="text-[10px] text-brand-600 font-medium mb-1 print:hidden">
+                        Tồn thực: {stockMap[item.productId].physicalStock} | Khả dụng: <span className={stockMap[item.productId].availableStock <= 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{stockMap[item.productId].availableStock}</span>
+                      </div>
+                    )}
                     <div className="hidden print:block font-medium">{(() => { const pt = products.find(p => p.id === item.productId); return pt ? (pt.code ? `${pt.code} - ${pt.name}` : pt.name) : item.description; })()}</div>
                     <input disabled={quote.status !== 'DRAFT'} value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" placeholder="Ghi chú thêm" />
                   </td>
