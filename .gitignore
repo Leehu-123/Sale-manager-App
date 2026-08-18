@@ -43,3 +43,8 @@ next-env.d.ts
 # Database
 *.db
 *.db-journal
+
+# VPS debug files
+vps_*.txt
+ssh_check*.js
+ssh_check2.js
