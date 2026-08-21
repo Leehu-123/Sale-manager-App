@@ -56,6 +56,22 @@ export default function OrderDetailPage() {
     } catch { alert('Có lỗi xảy ra') }
   }
 
+  const handleCancelOrder = async () => {
+    if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này không? Việc này không thể hoàn tác.')) return;
+    try {
+      await apiClient.post(`/orders/${params.id}/cancel`, {})
+      fetchOrder()
+    } catch { alert('Không thể hủy đơn hàng (hoặc đơn đã hoàn thành/đã hủy).') }
+  }
+
+  const handleDeleteOrder = async () => {
+    if (!confirm('Bạn có chắc chắn muốn XÓA hoàn toàn đơn hàng này không?')) return;
+    try {
+      await apiClient.delete(`/orders/${params.id}`)
+      router.push('/orders')
+    } catch { alert('Không thể xóa. Đơn hàng chỉ có thể xóa khi ở trạng thái MỚI hoặc ĐÃ HỦY.') }
+  }
+
   if (loading) return <div className="flex items-center justify-center h-64"><div className="spinner" /></div>
   if (!order) return <div className="text-center py-12 text-surface-500">Không tìm thấy đơn hàng</div>
 
@@ -78,6 +94,14 @@ export default function OrderDetailPage() {
           {order.status === 'CONFIRMED' && <button onClick={() => handleStatusChange('DELIVERING')} className="px-3 py-2 bg-amber-500 text-white rounded-lg text-sm">Vận chuyển đơn hàng</button>}
           {order.status === 'DELIVERING' && <button onClick={() => handleStatusChange('DEBT_TRACKING')} className="px-3 py-2 bg-orange-500 text-white rounded-lg text-sm">Theo dõi công nợ</button>}
           {order.status === 'DEBT_TRACKING' && Math.round(order.remainingAmount) <= 0 && <button onClick={() => handleStatusChange('COMPLETED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Kết thúc đơn hàng</button>}
+          
+          {!['COMPLETED', 'CANCELLED'].includes(order.status) && (
+            <button onClick={handleCancelOrder} className="px-3 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-sm font-medium">Hủy đơn</button>
+          )}
+          {['NEW', 'CANCELLED'].includes(order.status) && (
+            <button onClick={handleDeleteOrder} className="px-3 py-2 bg-surface-100 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-sm font-medium border border-red-200">Xóa</button>
+          )}
+
           <button onClick={() => setShowPaymentModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
             <DollarSign size={16} /> Thêm thanh toán
           </button>
