@@ -120,7 +120,7 @@ export default function OrderDetailPage() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 border-b"><h3 className="font-semibold">Hạng mục đơn hàng</h3></div>
         <table className="w-full data-table">
-          <thead><tr><th>#</th><th>Mô tả</th><th>m²</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+          <thead><tr><th>#</th><th>Mô tả</th><th>m²</th><th>SL(Kiện)</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
           <tbody>
             {order.items.map((item, i) => (
               <tr key={i}>

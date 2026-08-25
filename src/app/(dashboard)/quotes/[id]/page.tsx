@@ -8,10 +8,12 @@ import { formatCurrency, QUOTE_STATUS_LABELS, PRODUCT_UNIT_LABELS } from '@/lib/
 import { apiClient } from '@/lib/api-client'
 import { notifyAdminQuoteSent, notifyUserQuoteApproved } from '@/lib/telegram'
 
+interface Product { id: string; name: string; code?: string; salePrice: number; itemsPerPackage?: number }
+interface Customer { id: string; name: string; code: string }
 interface QuoteItem {
-  id?: string; productId?: string; description: string; unit?: string; specification?: string
-  thickness?: string; width?: number; length?: number; area?: number;
-  quantity: number; unitPrice: number; discount?: number; total: number
+  id?: string; productId?: string; description: string; unit?: string; specification?: string; thickness?: string
+  width?: number; length?: number; area?: number; discount?: number; itemsPerPackage?: number;
+  quantity: number; unitPrice: number; total: number
 }
 
 interface QuoteDetail {
@@ -99,6 +101,7 @@ export default function QuoteDetailPage() {
       if (product) {
         item.description = product.name
         item.unitPrice = product.salePrice
+        item.itemsPerPackage = product.itemsPerPackage || 1
       }
     }
 
@@ -106,7 +109,16 @@ export default function QuoteDetailPage() {
     const l = item.length || 0
     const q = item.quantity || 0
     
-    const area = (w * l * q) / 1000000
+    // Attempt to get itemsPerPackage from the product list if not in item yet
+    let ipp = item.itemsPerPackage;
+    if (!ipp && item.productId) {
+      const p = products.find(p => p.id === item.productId);
+      if (p) ipp = p.itemsPerPackage || 1;
+    }
+    ipp = ipp || 1;
+    item.itemsPerPackage = ipp;
+    
+    const area = (w * l * (q * ipp)) / 1000000
     item.area = area > 0 ? Math.round(area * 1000) / 1000 : 0
     
     const up = item.unitPrice || 0
@@ -304,7 +316,7 @@ export default function QuoteDetailPage() {
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Độ dày</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Rộng(mm)</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Dài(mm)</th>
-                <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">SL(Tấm)</th>
+                <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">SL(Kiện)</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Tổng m2</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-24">Đơn giá</th>
                 <th className={`p-2 text-left text-xs font-medium text-surface-500 w-24 ${!showDiscount ? 'print:hidden' : ''}`}>CK/m2</th>
