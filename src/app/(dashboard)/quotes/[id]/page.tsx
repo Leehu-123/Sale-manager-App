@@ -26,8 +26,6 @@ interface QuoteDetail {
   _count?: { salesOrders: number }
 }
 
-interface Product { id: string; code: string; name: string; unit: string; salePrice: number }
-
 export default function QuoteDetailPage() {
   const { data: session } = useSession()
   const params = useParams()
