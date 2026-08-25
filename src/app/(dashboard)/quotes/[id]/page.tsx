@@ -409,10 +409,8 @@ export default function QuoteDetailPage() {
             </div>
             <div className="flex justify-between text-sm items-center gap-2">
               <span>VAT (%):</span>
-              {quote.status === 'DRAFT' ? (
-                <input type="number" value={vatRate} onChange={e => setVatRate(parseFloat(e.target.value) || 0)} className="w-16 border rounded px-2 py-1 text-xs text-right print:hidden" min="0" max="100" />
-              ) : null}
-              <span className={quote.status === 'DRAFT' ? 'hidden print:inline' : ''}>{vatRate}% = </span>
+              <input type="number" value={vatRate} onChange={e => setVatRate(parseFloat(e.target.value) || 0)} className="w-16 border rounded px-2 py-1 text-xs text-right print:hidden" min="0" max="100" />
+              <span className="hidden print:inline">{vatRate}% = </span>
               <span>{formatCurrency(vatAmount)}</span>
             </div>
             <div className="flex justify-between text-base font-bold border-t pt-2 text-surface-900">

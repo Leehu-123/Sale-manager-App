@@ -220,11 +220,11 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-surface-700 mb-1">Thuế VAT mặc định (%)</label>
-              <input type="number" value={settings.default_vat_rate || '10'} onChange={e => setSettings({...settings, default_vat_rate: e.target.value})} disabled={!canEditSettings} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm disabled:bg-surface-50" />
+              <input type="number" value={settings.default_vat_rate ?? ''} onChange={e => setSettings({...settings, default_vat_rate: e.target.value})} disabled={!canEditSettings} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm disabled:bg-surface-50" placeholder="10" />
             </div>
             <div>
               <label className="block text-sm font-medium text-surface-700 mb-1">Thời hạn báo giá (ngày)</label>
-              <input type="number" value={settings.default_quote_validity_days || '30'} onChange={e => setSettings({...settings, default_quote_validity_days: e.target.value})} disabled={!canEditSettings} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm disabled:bg-surface-50" />
+              <input type="number" value={settings.default_quote_validity_days ?? ''} onChange={e => setSettings({...settings, default_quote_validity_days: e.target.value})} disabled={!canEditSettings} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm disabled:bg-surface-50" placeholder="30" />
             </div>
           </div>
           <div>
