@@ -9,7 +9,7 @@ import { useSession } from 'next-auth/react'
 
 interface Product {
   id: string; code: string; name: string; glassType: string; unit: string
-  salePrice: number; description?: string; isActive: boolean
+  salePrice: number; description?: string; isActive: boolean; itemsPerPackage?: number
 }
 
 export default function ProductsPage() {
