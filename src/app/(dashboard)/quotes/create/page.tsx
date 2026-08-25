@@ -6,7 +6,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { apiClient } from '@/lib/api-client'
 
-interface Product { id: string; name: string; code?: string; salePrice: number; itemsPerPackage?: number }
+interface Product { id: string; name: string; code?: string; salePrice: number; itemsPerPackage?: number; thickness?: number; widthMm?: number; lengthMm?: number; areaM2?: number }
 interface Customer { id: string; name: string; code: string }
 interface QuoteItem {
   productId?: string; description: string; unit?: string; specification?: string; thickness?: string
@@ -86,6 +86,9 @@ export default function CreateQuotePage() {
         item.description = product.name; 
         item.unitPrice = product.salePrice;
         item.itemsPerPackage = product.itemsPerPackage || 1;
+        item.thickness = product.thickness ? String(product.thickness) : '';
+        item.width = product.widthMm || 0;
+        item.length = product.lengthMm || 0;
       }
     }
     
@@ -204,13 +207,15 @@ export default function CreateQuotePage() {
                 <tr>
                   <th className="p-2 text-left text-xs font-medium text-surface-500 w-8">#</th>
                   <th className="p-2 text-left text-xs font-medium text-surface-500 min-w-[150px]">Sản phẩm</th>
-                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Độ dày</th>
-                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Rộng(mm)</th>
-                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Dài(mm)</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">Độ dày</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">Rộng(mm)</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">Dài(mm)</th>
                   <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">SL(Kiện)</th>
+                  <th className="p-2 text-center text-xs font-medium text-surface-500 w-16">Tấm/Kiện</th>
+                  <th className="p-2 text-center text-xs font-medium text-surface-500 w-16">Tổng tấm</th>
                   <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Tổng m2</th>
                   <th className="p-2 text-left text-xs font-medium text-surface-500 w-24">Đơn giá</th>
-                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-24">CK/m2</th>
+                  <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">CK/m2</th>
                   <th className="p-2 text-right text-xs font-medium text-surface-500 w-28">Thành tiền</th>
                   <th className="p-2 w-8"></th>
                 </tr>
@@ -231,11 +236,13 @@ export default function CreateQuotePage() {
                       )}
                       <input placeholder="Ghi chú SP" value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" />
                     </td>
-                    <td className="p-2"><input placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(i, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs" /></td>
-                    <td className="p-2"><input type="number" placeholder="Rộng" value={item.width || ''} onChange={e => updateItem(i, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
-                    <td className="p-2"><input type="number" placeholder="Dài" value={item.length || ''} onChange={e => updateItem(i, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
-                    <td className="p-2"><input type="number" value={item.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 1)} className="w-full border rounded px-2 py-1 text-xs" min="1" /></td>
-                    <td className="p-2"><input type="number" value={item.area || ''} disabled className="w-full border rounded px-2 py-1 text-xs bg-surface-50" /></td>
+                    <td className="p-2"><input placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(i, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50" /></td>
+                    <td className="p-2"><input type="number" placeholder="Rộng" value={item.width || ''} onChange={e => updateItem(i, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50" /></td>
+                    <td className="p-2"><input type="number" placeholder="Dài" value={item.length || ''} onChange={e => updateItem(i, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50" /></td>
+                    <td className="p-2"><input type="number" value={item.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 1)} className="w-full border border-brand-300 font-semibold rounded px-2 py-1 text-xs text-brand-700" min="1" /></td>
+                    <td className="p-2 text-center text-xs text-surface-600 bg-surface-50">{item.itemsPerPackage || 1}</td>
+                    <td className="p-2 text-center text-xs font-semibold text-brand-600 bg-surface-50">{(item.quantity || 0) * (item.itemsPerPackage || 1)}</td>
+                    <td className="p-2"><input type="number" value={item.area || ''} disabled className="w-full border rounded px-2 py-1 text-xs bg-surface-50 font-medium" /></td>
                     <td className="p-2"><input type="number" value={item.unitPrice} onChange={e => updateItem(i, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
                     <td className="p-2"><input type="number" value={item.discount || ''} onChange={e => updateItem(i, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600" placeholder="CK" /></td>
                     <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>

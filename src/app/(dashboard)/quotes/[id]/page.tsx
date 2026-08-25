@@ -8,7 +8,7 @@ import { formatCurrency, QUOTE_STATUS_LABELS, PRODUCT_UNIT_LABELS } from '@/lib/
 import { apiClient } from '@/lib/api-client'
 import { notifyAdminQuoteSent, notifyUserQuoteApproved } from '@/lib/telegram'
 
-interface Product { id: string; name: string; code?: string; salePrice: number; itemsPerPackage?: number }
+interface Product { id: string; name: string; code?: string; salePrice: number; itemsPerPackage?: number; thickness?: number; widthMm?: number; lengthMm?: number; areaM2?: number }
 interface Customer { id: string; name: string; code: string }
 interface QuoteItem {
   id?: string; productId?: string; description: string; unit?: string; specification?: string; thickness?: string
@@ -100,6 +100,9 @@ export default function QuoteDetailPage() {
         item.description = product.name
         item.unitPrice = product.salePrice
         item.itemsPerPackage = product.itemsPerPackage || 1
+        item.thickness = product.thickness ? String(product.thickness) : ''
+        item.width = product.widthMm || 0
+        item.length = product.lengthMm || 0
       }
     }
 
@@ -311,66 +314,84 @@ export default function QuoteDetailPage() {
               <tr>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-8">#</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 min-w-[150px]">Sản phẩm</th>
-                <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Độ dày</th>
-                <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Rộng(mm)</th>
-                <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Dài(mm)</th>
+                <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">Độ dày</th>
+                <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">Rộng(mm)</th>
+                <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">Dài(mm)</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-16">SL(Kiện)</th>
+                <th className="p-2 text-center text-xs font-medium text-surface-500 w-16">Tấm/Kiện</th>
+                <th className="p-2 text-center text-xs font-medium text-surface-500 w-16">Tổng tấm</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-20">Tổng m2</th>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-24">Đơn giá</th>
-                <th className={`p-2 text-left text-xs font-medium text-surface-500 w-24 ${!showDiscount ? 'print:hidden' : ''}`}>CK/m2</th>
+                <th className={`p-2 text-left text-xs font-medium text-surface-500 w-20 ${!showDiscount ? 'print:hidden' : ''}`}>CK/m2</th>
                 <th className="p-2 text-right text-xs font-medium text-surface-500 w-28">Thành tiền</th>
                 <th className="p-2 w-8 print:hidden"></th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => (
-                <tr key={index} className="border-t hover:bg-surface-50">
-                  <td className="p-2 text-center text-surface-400">{index + 1}</td>
-                  <td className="p-2">
-                    <select disabled={quote.status !== 'DRAFT'} value={item.productId || ''} onChange={e => updateItem(index, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden mb-1">
-                      <option value="">Chọn SP</option>
-                      {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} - ${p.name}` : p.name}</option>)}
-                    </select>
-                    {item.productId && stockMap[item.productId] && (
-                      <div className="text-[10px] text-brand-600 font-medium mb-1 print:hidden">
-                        Tồn thực: {stockMap[item.productId].physicalStock} | Khả dụng: <span className={stockMap[item.productId].availableStock <= 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{stockMap[item.productId].availableStock}</span>
-                      </div>
-                    )}
-                    <div className="hidden print:block font-medium">{(() => { const pt = products.find(p => p.id === item.productId); return pt ? (pt.code ? `${pt.code} - ${pt.name}` : pt.name) : item.description; })()}</div>
-                    <input disabled={quote.status !== 'DRAFT'} value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" placeholder="Ghi chú thêm" />
-                  </td>
-                  <td className="p-2">
-                    <input disabled={quote.status !== 'DRAFT'} placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(index, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
-                    <div className="hidden print:block">{item.thickness || ''}</div>
-                  </td>
-                  <td className="p-2">
-                    <input disabled={quote.status !== 'DRAFT'} type="number" placeholder="Rộng" value={item.width || ''} onChange={e => updateItem(index, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
-                    <div className="hidden print:block">{item.width || ''}</div>
-                  </td>
-                  <td className="p-2">
-                    <input disabled={quote.status !== 'DRAFT'} type="number" placeholder="Dài" value={item.length || ''} onChange={e => updateItem(index, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
-                    <div className="hidden print:block">{item.length || ''}</div>
-                  </td>
-                  <td className="p-2">
-                    <input disabled={quote.status !== 'DRAFT'} type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} className="w-full border rounded px-2 py-1 text-xs print:hidden" min="1" />
-                    <div className="hidden print:block text-center">{item.quantity}</div>
-                  </td>
-                  <td className="p-2">
-                    <input disabled type="number" value={item.area || ''} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
-                    <div className="hidden print:block">{item.area ? item.area.toFixed(3) : ''}</div>
-                  </td>
-                  <td className="p-2">
-                    <input disabled={quote.status !== 'DRAFT'} type="number" value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
-                    <div className="hidden print:block">{formatCurrency(item.unitPrice)}</div>
-                  </td>
-                  <td className={`p-2 ${!showDiscount ? 'print:hidden' : ''}`}>
-                    <input disabled={quote.status !== 'DRAFT'} type="number" value={item.discount || ''} onChange={e => updateItem(index, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600 print:hidden" placeholder="CK" />
-                    <div className="hidden print:block text-red-600">{item.discount ? formatCurrency(item.discount) : '-'}</div>
-                  </td>
-                  <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
-                  <td className="p-2 print:hidden">{quote.status === 'DRAFT' && <button onClick={() => removeItem(index)} className="p-1 hover:bg-red-50 rounded text-red-400"><Trash2 size={14} /></button>}</td>
-                </tr>
-              ))}
+              {items.map((item, index) => {
+                let ipp = item.itemsPerPackage;
+                if (!ipp && item.productId) {
+                  const p = products.find(prod => prod.id === item.productId);
+                  if (p) ipp = p.itemsPerPackage || 1;
+                }
+                ipp = ipp || 1;
+                const totalPlates = (item.quantity || 0) * ipp;
+
+                return (
+                  <tr key={index} className="border-t hover:bg-surface-50">
+                    <td className="p-2 text-center text-surface-400">{index + 1}</td>
+                    <td className="p-2">
+                      <select disabled={quote.status !== 'DRAFT'} value={item.productId || ''} onChange={e => updateItem(index, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden mb-1">
+                        <option value="">Chọn SP</option>
+                        {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} - ${p.name}` : p.name}</option>)}
+                      </select>
+                      {item.productId && stockMap[item.productId] && (
+                        <div className="text-[10px] text-brand-600 font-medium mb-1 print:hidden">
+                          Tồn thực: {stockMap[item.productId].physicalStock} | Khả dụng: <span className={stockMap[item.productId].availableStock <= 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{stockMap[item.productId].availableStock}</span>
+                        </div>
+                      )}
+                      <div className="hidden print:block font-medium">{(() => { const pt = products.find(p => p.id === item.productId); return pt ? (pt.code ? `${pt.code} - ${pt.name}` : pt.name) : item.description; })()}</div>
+                      <input disabled={quote.status !== 'DRAFT'} value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" placeholder="Ghi chú thêm" />
+                    </td>
+                    <td className="p-2">
+                      <input disabled={quote.status !== 'DRAFT'} placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(index, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
+                      <div className="hidden print:block">{item.thickness || ''}</div>
+                    </td>
+                    <td className="p-2">
+                      <input disabled={quote.status !== 'DRAFT'} type="number" placeholder="Rộng" value={item.width || ''} onChange={e => updateItem(index, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
+                      <div className="hidden print:block">{item.width || ''}</div>
+                    </td>
+                    <td className="p-2">
+                      <input disabled={quote.status !== 'DRAFT'} type="number" placeholder="Dài" value={item.length || ''} onChange={e => updateItem(index, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
+                      <div className="hidden print:block">{item.length || ''}</div>
+                    </td>
+                    <td className="p-2">
+                      <input disabled={quote.status !== 'DRAFT'} type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} className="w-full border border-brand-300 font-semibold rounded px-2 py-1 text-xs text-brand-700 print:hidden" min="1" />
+                      <div className="hidden print:block text-center font-semibold">{item.quantity}</div>
+                    </td>
+                    <td className="p-2 text-center text-xs text-surface-600 bg-surface-50">
+                      {ipp}
+                    </td>
+                    <td className="p-2 text-center text-xs font-semibold text-brand-600 bg-surface-50">
+                      {totalPlates}
+                    </td>
+                    <td className="p-2">
+                      <input disabled type="number" value={item.area || ''} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 font-medium print:hidden" />
+                      <div className="hidden print:block">{item.area ? item.area.toFixed(3) : ''}</div>
+                    </td>
+                    <td className="p-2">
+                      <input disabled={quote.status !== 'DRAFT'} type="number" value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
+                      <div className="hidden print:block">{formatCurrency(item.unitPrice)}</div>
+                    </td>
+                    <td className={`p-2 ${!showDiscount ? 'print:hidden' : ''}`}>
+                      <input disabled={quote.status !== 'DRAFT'} type="number" value={item.discount || ''} onChange={e => updateItem(index, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600 print:hidden" placeholder="CK" />
+                      <div className="hidden print:block text-red-600">{item.discount ? formatCurrency(item.discount) : '-'}</div>
+                    </td>
+                    <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
+                    <td className="p-2 print:hidden">{quote.status === 'DRAFT' && <button onClick={() => removeItem(index)} className="p-1 hover:bg-red-50 rounded text-red-400"><Trash2 size={14} /></button>}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
