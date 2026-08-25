@@ -51,14 +51,19 @@ export default function SettingsPage() {
     setSaving(true)
     setSaved(false)
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        alert('Lỗi lưu cài đặt: ' + (errData.error || `HTTP ${res.status}`))
+        return
+      }
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch { alert('Có lỗi xảy ra') }
+    } catch { alert('Có lỗi xảy ra khi kết nối server') }
     finally { setSaving(false) }
   }
 

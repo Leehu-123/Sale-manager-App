@@ -47,7 +47,8 @@ export default function CreateQuotePage() {
       apiClient.get('/customers?page=1&limit=100'),
       apiClient.get('/products?page=1&limit=100'),
       apiClient.get(stockUrl).catch(() => null),
-    ]).then(([c, p, stock]) => {
+      fetch('/api/settings').then(r => r.json()).catch(() => ({})),
+    ]).then(([c, p, stock, settingsData]) => {
       setCustomers(extractArray(c));
       setProducts(extractArray(p));
       const stockArray = extractArray(stock);
@@ -63,6 +64,14 @@ export default function CreateQuotePage() {
         }
       });
       setStockMap(sMap);
+
+      // Áp dụng cài đặt mặc định từ settings
+      if (settingsData?.default_vat_rate) {
+        setVatRate(parseFloat(settingsData.default_vat_rate) || 10);
+      }
+      if (settingsData?.default_quote_terms && !terms) {
+        setTerms(settingsData.default_quote_terms);
+      }
     }).catch(err => {
       console.error('Fetch error:', err);
     })
