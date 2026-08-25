@@ -21,18 +21,22 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '' })
+  const [form, setForm] = useState({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '', itemsPerPackage: '1' })
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams({ limit: '100' })
     if (search) params.set('search', search)
     if (groupFilter) params.set('group', groupFilter)
+    
     try {
-      const data = await apiClient.get(`/products?${params}`)
-      setProducts(extractArray(data))
-    } catch (err) { console.error(err) }
-    finally { setLoading(false) }
+      const res = await apiClient.get(`/products?${params.toString()}`)
+      setProducts(res.data?.data || res.data || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }, [search, groupFilter])
 
   useEffect(() => { fetchProducts() }, [fetchProducts])
@@ -50,7 +54,8 @@ export default function ProductsPage() {
         unit: form.unit,
         salePrice: parseFloat(form.referencePrice) || 0,
         costPrice: 0,
-        description: form.description
+        description: form.description,
+        itemsPerPackage: parseInt(form.itemsPerPackage) || 1
       };
       const res = editId 
         ? await apiClient.put(url, payload)
@@ -58,7 +63,7 @@ export default function ProductsPage() {
       
       setShowModal(false)
       setEditId(null)
-      setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '' })
+      setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '', itemsPerPackage: '1' })
       fetchProducts()
     } catch (err: any) { 
       alert(err.message || 'Có lỗi xảy ra') 
@@ -68,7 +73,7 @@ export default function ProductsPage() {
 
   const handleEdit = (product: Product) => {
     setEditId(product.id)
-    setForm({ code: product.code, name: product.name, group: product.glassType, unit: product.unit, referencePrice: String(product.salePrice), description: product.description || '' })
+    setForm({ code: product.code, name: product.name, group: product.glassType, unit: product.unit, referencePrice: String(product.salePrice), description: product.description || '', itemsPerPackage: String(product.itemsPerPackage || 1) })
     setShowModal(true)
   }
 
@@ -79,7 +84,7 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold text-surface-900">Sản phẩm & Dịch vụ</h1>
           <p className="text-surface-500 text-sm mt-1">Quản lý danh mục sản phẩm kính xây dựng</p>
         </div>
-        <button onClick={() => { setEditId(null); setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '' }); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
+        <button onClick={() => { setEditId(null); setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '', itemsPerPackage: '1' }); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
           <Plus size={16} /> Thêm sản phẩm
         </button>
       </div>
@@ -160,9 +165,13 @@ export default function ProductsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Đơn giá tham khảo</label>
-              <input value={form.referencePrice} onChange={e => setForm({...form, referencePrice: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" type="number" />
+              <label className="block text-sm font-medium text-surface-700 mb-1">Quy cách (Tấm/Kiện)</label>
+              <input value={form.itemsPerPackage} onChange={e => setForm({...form, itemsPerPackage: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" type="number" min="1" />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1">Đơn giá tham khảo</label>
+            <input value={form.referencePrice} onChange={e => setForm({...form, referencePrice: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" type="number" />
           </div>
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Mô tả</label>
