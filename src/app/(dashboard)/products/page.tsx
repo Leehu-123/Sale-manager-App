@@ -130,8 +130,13 @@ export default function ProductsPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between mt-4">
-                <span className="text-lg font-bold text-surface-900">{formatCurrency(product.salePrice)}</span>
-                <span className="text-xs text-surface-500">/ {PRODUCT_UNIT_LABELS[product.unit]}</span>
+                <div>
+                  <span className="text-lg font-bold text-surface-900">{formatCurrency(product.salePrice)}</span>
+                  <span className="text-xs text-surface-500 ml-1">/ {PRODUCT_UNIT_LABELS[product.unit]}</span>
+                </div>
+                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium border border-blue-200">
+                  {product.itemsPerPackage || 1} tấm/kiện
+                </span>
               </div>
               {product.description && <p className="text-xs text-surface-500 mt-2 line-clamp-2">{product.description}</p>}
             </div>
