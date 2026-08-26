@@ -303,7 +303,7 @@ export default function QuoteDetailPage() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
         <div className="p-4 border-b flex justify-between items-center print:hidden">
           <h3 className="font-semibold">Hạng mục báo giá</h3>
-          {quote.status === 'DRAFT' && <button onClick={addItem} className="text-sm flex items-center gap-1 text-brand-600 hover:text-brand-700 font-medium"><Plus size={16} /> Thêm dòng</button>}
+          <button onClick={addItem} className="text-sm flex items-center gap-1 text-brand-600 hover:text-brand-700 font-medium"><Plus size={16} /> Thêm dòng</button>
         </div>
         <div className="hidden print:block p-4 border-b border-brand-200">
           <h3 className="font-bold text-lg text-brand-800">Hạng mục báo giá</h3>
@@ -341,7 +341,7 @@ export default function QuoteDetailPage() {
                   <tr key={index} className="border-t hover:bg-surface-50">
                     <td className="p-2 text-center text-surface-400">{index + 1}</td>
                     <td className="p-2">
-                      <select disabled={quote.status !== 'DRAFT'} value={item.productId || ''} onChange={e => updateItem(index, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden mb-1">
+                      <select value={item.productId || ''} onChange={e => updateItem(index, 'productId', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden mb-1">
                         <option value="">Chọn SP</option>
                         {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} - ${p.name}` : p.name}</option>)}
                       </select>
@@ -351,22 +351,22 @@ export default function QuoteDetailPage() {
                         </div>
                       )}
                       <div className="hidden print:block font-medium">{(() => { const pt = products.find(p => p.id === item.productId); return pt ? (pt.code ? `${pt.code} - ${pt.name}` : pt.name) : item.description; })()}</div>
-                      <input disabled={quote.status !== 'DRAFT'} value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" placeholder="Ghi chú thêm" />
+                      <input value={item.description} onChange={e => updateItem(index, 'description', e.target.value)} className="w-full border rounded px-2 py-1 text-xs print:hidden" placeholder="Ghi chú thêm" />
                     </td>
                     <td className="p-2">
-                      <input disabled={quote.status !== 'DRAFT'} placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(index, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
+                      <input placeholder="VD: 6.38" value={item.thickness || ''} onChange={e => updateItem(index, 'thickness', e.target.value)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
                       <div className="hidden print:block">{item.thickness || ''}</div>
                     </td>
                     <td className="p-2">
-                      <input disabled={quote.status !== 'DRAFT'} type="number" placeholder="Rộng" value={item.width || ''} onChange={e => updateItem(index, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
+                      <input type="number" placeholder="Rộng" value={item.width || ''} onChange={e => updateItem(index, 'width', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
                       <div className="hidden print:block">{item.width || ''}</div>
                     </td>
                     <td className="p-2">
-                      <input disabled={quote.status !== 'DRAFT'} type="number" placeholder="Dài" value={item.length || ''} onChange={e => updateItem(index, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
+                      <input type="number" placeholder="Dài" value={item.length || ''} onChange={e => updateItem(index, 'length', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs bg-surface-50 print:hidden" />
                       <div className="hidden print:block">{item.length || ''}</div>
                     </td>
                     <td className="p-2">
-                      <input disabled={quote.status !== 'DRAFT'} type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} className="w-full border border-brand-300 font-semibold rounded px-2 py-1 text-xs text-brand-700 print:hidden" min="1" />
+                      <input type="number" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} className="w-full border border-brand-300 font-semibold rounded px-2 py-1 text-xs text-brand-700 print:hidden" min="1" />
                       <div className="hidden print:block text-center font-semibold">{item.quantity}</div>
                     </td>
                     <td className="p-2 text-center text-xs text-surface-600 bg-surface-50">
@@ -380,15 +380,15 @@ export default function QuoteDetailPage() {
                       <div className="hidden print:block">{item.area ? item.area.toFixed(3) : ''}</div>
                     </td>
                     <td className="p-2">
-                      <input disabled={quote.status !== 'DRAFT'} type="number" value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
+                      <input type="number" value={item.unitPrice} onChange={e => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs print:hidden" />
                       <div className="hidden print:block">{formatCurrency(item.unitPrice)}</div>
                     </td>
                     <td className={`p-2 ${!showDiscount ? 'print:hidden' : ''}`}>
-                      <input disabled={quote.status !== 'DRAFT'} type="number" value={item.discount || ''} onChange={e => updateItem(index, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600 print:hidden" placeholder="CK" />
+                      <input type="number" value={item.discount || ''} onChange={e => updateItem(index, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600 print:hidden" placeholder="CK" />
                       <div className="hidden print:block text-red-600">{item.discount ? formatCurrency(item.discount) : '-'}</div>
                     </td>
                     <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
-                    <td className="p-2 print:hidden">{quote.status === 'DRAFT' && <button onClick={() => removeItem(index)} className="p-1 hover:bg-red-50 rounded text-red-400"><Trash2 size={14} /></button>}</td>
+                    <td className="p-2 print:hidden"><button onClick={() => removeItem(index)} className="p-1 hover:bg-red-50 rounded text-red-400"><Trash2 size={14} /></button></td>
                   </tr>
                 );
               })}
@@ -411,28 +411,20 @@ export default function QuoteDetailPage() {
             </div>
             <div className="flex justify-between text-sm items-center gap-2">
               <span>Vận chuyển:</span>
-              {quote.status === 'DRAFT' ? (
-                <input type="number" value={shippingCost} onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
-              ) : null}
-              <span className={quote.status === 'DRAFT' ? 'hidden print:inline' : ''}>{formatCurrency(shippingCost)}</span>
+              <input type="number" value={shippingCost} onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
+              <span className="hidden print:inline">{formatCurrency(shippingCost)}</span>
             </div>
             <div className="flex justify-between text-sm items-center gap-2">
               <span>Thi công/lắp đặt:</span>
-              {quote.status === 'DRAFT' ? (
-                <input type="number" value={installationCost} onChange={e => setInstallationCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
-              ) : null}
-              <span className={quote.status === 'DRAFT' ? 'hidden print:inline' : ''}>{formatCurrency(installationCost)}</span>
+              <input type="number" value={installationCost} onChange={e => setInstallationCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
+              <span className="hidden print:inline">{formatCurrency(installationCost)}</span>
             </div>
             <div className={`flex justify-between text-sm items-center gap-2 text-red-600 ${!showDiscount && discount > 0 ? 'print:hidden' : ''}`}>
               <span className="flex items-center gap-2">Chiết khấu tổng:
-                {quote.status === 'DRAFT' ? (
                   <span className="print:hidden"><input type="number" placeholder="%" value={discountRate || ''} onChange={e => { const rate = parseFloat(e.target.value) || 0; setDiscountRate(rate); setDiscount(Math.round(subtotalBeforeDiscount * rate / 100)) }} className="w-16 border rounded px-2 py-1 text-xs text-right" /> %</span>
-                ) : null}
               </span>
-              {quote.status === 'DRAFT' ? (
-                <input type="number" value={discount} onChange={e => { setDiscount(parseFloat(e.target.value) || 0); setDiscountRate(0) }} className="w-32 border rounded px-2 py-1 text-xs text-right text-red-600 print:hidden" />
-              ) : null}
-              <span className={quote.status === 'DRAFT' ? 'hidden print:inline' : ''}>{discount > 0 ? '-' + formatCurrency(discount) : '0 ₫'}</span>
+              <input type="number" value={discount} onChange={e => { setDiscount(parseFloat(e.target.value) || 0); setDiscountRate(0) }} className="w-32 border rounded px-2 py-1 text-xs text-right text-red-600 print:hidden" />
+              <span className="hidden print:inline">{discount > 0 ? '-' + formatCurrency(discount) : '0 ₫'}</span>
             </div>
             <div className="flex justify-between text-sm border-t pt-2">
               <span>Tổng trước VAT:</span>
