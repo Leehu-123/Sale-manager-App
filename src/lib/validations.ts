@@ -52,7 +52,7 @@ export const productSchema = z.object({
   code: z.string().min(1, 'Mã sản phẩm không được để trống'),
   name: z.string().min(1, 'Tên sản phẩm không được để trống'),
   group: z.enum(['TEMPERED_GLASS', 'INSULATED_GLASS', 'LAMINATED_GLASS', 'TINTED_GLASS', 'REFLECTIVE_GLASS', 'GLASS_PARTITION', 'GLASS_DOOR', 'GLASS_RAILING', 'SHOWER_CABIN', 'GLASS_FACADE', 'ACCESSORIES', 'INSTALLATION']),
-  unit: z.enum(['SQM', 'SET', 'LINEAR_METER', 'PIECE', 'PACKAGE']).optional(),
+  unit: z.string().optional(),
   referencePrice: z.number().min(0).optional(),
   description: z.string().optional().nullable(),
   isActive: z.boolean().optional(),

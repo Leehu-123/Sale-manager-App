@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react'
 
 interface Product {
   id: string; code: string; name: string; glassType: string; unit: string
+  standardSize?: string; piecesPerPack?: number; thickness?: number
   salePrice: number; description?: string; isActive: boolean; itemsPerPackage?: number
 }
 
@@ -21,7 +22,10 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '', itemsPerPackage: '1' })
+  const [form, setForm] = useState({
+    code: '', name: '', group: 'TEMPERED_GLASS', unit: 'tam',
+    standardSize: '', piecesPerPack: '', referencePrice: '', description: '', itemsPerPackage: '1'
+  })
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -52,6 +56,8 @@ export default function ProductsPage() {
         code: form.code,
         glassType: form.group,
         unit: form.unit,
+        standardSize: form.standardSize || '-',
+        piecesPerPack: form.piecesPerPack ? parseInt(form.piecesPerPack, 10) : (parseInt(form.itemsPerPackage) || 1),
         salePrice: parseFloat(form.referencePrice) || 0,
         costPrice: 0,
         description: form.description,
@@ -63,7 +69,7 @@ export default function ProductsPage() {
       
       setShowModal(false)
       setEditId(null)
-      setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '', itemsPerPackage: '1' })
+      setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'tam', standardSize: '', piecesPerPack: '', referencePrice: '', description: '', itemsPerPackage: '1' })
       fetchProducts()
     } catch (err: any) { 
       alert(err.message || 'Có lỗi xảy ra') 
@@ -73,7 +79,17 @@ export default function ProductsPage() {
 
   const handleEdit = (product: Product) => {
     setEditId(product.id)
-    setForm({ code: product.code, name: product.name, group: product.glassType, unit: product.unit, referencePrice: String(product.salePrice), description: product.description || '', itemsPerPackage: String(product.itemsPerPackage || 1) })
+    setForm({
+      code: product.code,
+      name: product.name,
+      group: product.glassType,
+      unit: product.unit || 'tam',
+      standardSize: product.standardSize && product.standardSize !== '-' ? product.standardSize : '',
+      piecesPerPack: product.piecesPerPack ? String(product.piecesPerPack) : String(product.itemsPerPackage || '1'),
+      referencePrice: String(product.salePrice),
+      description: product.description || '',
+      itemsPerPackage: String(product.itemsPerPackage || product.piecesPerPack || '1')
+    })
     setShowModal(true)
   }
 
@@ -84,7 +100,7 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold text-surface-900">Sản phẩm & Dịch vụ</h1>
           <p className="text-surface-500 text-sm mt-1">Quản lý danh mục sản phẩm kính xây dựng</p>
         </div>
-        <button onClick={() => { setEditId(null); setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'SQM', referencePrice: '', description: '', itemsPerPackage: '1' }); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
+        <button onClick={() => { setEditId(null); setForm({ code: '', name: '', group: 'TEMPERED_GLASS', unit: 'tam', standardSize: '', piecesPerPack: '', referencePrice: '', description: '', itemsPerPackage: '1' }); setShowModal(true) }} className="flex items-center gap-2 px-4 py-2.5 btn-primary text-white rounded-lg text-sm font-medium">
           <Plus size={16} /> Thêm sản phẩm
         </button>
       </div>
@@ -113,7 +129,7 @@ export default function ProductsPage() {
             <div key={product.id} onClick={() => handleEdit(product)} className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer border border-surface-100 hover:border-brand-200">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="badge bg-indigo-100 text-indigo-800">{PRODUCT_GROUP_LABELS[product.glassType]}</span>
+                  <span className="badge bg-indigo-100 text-indigo-800">{PRODUCT_GROUP_LABELS[product.glassType] || product.glassType}</span>
                   <h3 className="font-semibold text-surface-900 mt-2">{product.name}</h3>
                   <p className="text-xs text-surface-400 mt-1">{product.code}</p>
                 </div>
@@ -129,14 +145,15 @@ export default function ProductsPage() {
                   )}
                 </div>
               </div>
+              
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-surface-600 bg-surface-50 p-2 rounded-lg">
+                <div>Quy cách: <span className="font-medium text-surface-800">{product.standardSize && product.standardSize !== '-' ? product.standardSize : 'N/A'}</span></div>
+                <div>Số tấm/kiện: <span className="font-medium text-surface-800">{product.piecesPerPack || product.itemsPerPackage || 'N/A'}</span></div>
+              </div>
+
               <div className="flex items-center justify-between mt-4">
-                <div>
-                  <span className="text-lg font-bold text-surface-900">{formatCurrency(product.salePrice)}</span>
-                  <span className="text-xs text-surface-500 ml-1">/ {PRODUCT_UNIT_LABELS[product.unit]}</span>
-                </div>
-                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium border border-blue-200">
-                  {product.itemsPerPackage || 1} tấm/kiện
-                </span>
+                <span className="text-lg font-bold text-surface-900">{formatCurrency(product.salePrice)}</span>
+                <span className="text-xs text-surface-500">/ {PRODUCT_UNIT_LABELS[product.unit] || product.unit}</span>
               </div>
               {product.description && <p className="text-xs text-surface-500 mt-2 line-clamp-2">{product.description}</p>}
             </div>
@@ -164,19 +181,25 @@ export default function ProductsPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Quy cách (Kích thước)</label>
+              <input value={form.standardSize} onChange={e => setForm({...form, standardSize: e.target.value})} placeholder="VD: 2440x3660" className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1">Số tấm/kiện</label>
+              <input type="number" min="1" value={form.piecesPerPack} onChange={e => setForm({...form, piecesPerPack: e.target.value, itemsPerPackage: e.target.value})} placeholder="VD: 50" className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <label className="block text-sm font-medium text-surface-700 mb-1">Đơn vị tính</label>
               <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm">
-                {Object.entries(PRODUCT_UNIT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(PRODUCT_UNIT_LABELS).filter(([k]) => !['bo', 'SET', 'SQM', 'PACKAGE', 'PIECE', 'LINEAR_METER'].includes(k)).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1">Quy cách (Tấm/Kiện)</label>
-              <input value={form.itemsPerPackage} onChange={e => setForm({...form, itemsPerPackage: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" type="number" min="1" />
+              <label className="block text-sm font-medium text-surface-700 mb-1">Đơn giá tham khảo</label>
+              <input value={form.referencePrice} onChange={e => setForm({...form, referencePrice: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" type="number" />
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Đơn giá tham khảo</label>
-            <input value={form.referencePrice} onChange={e => setForm({...form, referencePrice: e.target.value})} className="w-full border border-surface-300 rounded-lg px-3 py-2 text-sm" type="number" />
           </div>
           <div>
             <label className="block text-sm font-medium text-surface-700 mb-1">Mô tả</label>

@@ -210,11 +210,18 @@ export const PRODUCT_GROUP_LABELS: Record<string, string> = {
 }
 
 export const PRODUCT_UNIT_LABELS: Record<string, string> = {
+  tam: 'Tấm',
+  kien: 'Kiện',
+  m2: 'm²',
+  cai: 'Cái',
+  kg: 'kg',
+  met: 'Mét',
+  bo: 'Kiện',
   SQM: 'm²',
-  SET: 'bộ',
-  LINEAR_METER: 'mét dài',
-  PIECE: 'cái',
-  PACKAGE: 'gói',
+  SET: 'Kiện',
+  LINEAR_METER: 'Mét dài',
+  PIECE: 'Cái',
+  PACKAGE: 'Gói',
 }
 
 export const USER_STATUS_LABELS: Record<string, string> = {
