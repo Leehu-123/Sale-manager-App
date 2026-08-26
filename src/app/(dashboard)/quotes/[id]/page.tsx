@@ -253,8 +253,12 @@ export default function QuoteDetailPage() {
         <div className="flex gap-2">
           {quote.status === 'DRAFT' && <button onClick={() => handleStatusChange('SENT')} className="px-3 py-2 bg-brand-500 text-white rounded-lg text-sm">Gửi khách</button>}
           {quote.status === 'SENT' && <button onClick={() => handleStatusChange('APPROVED')} className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm">Duyệt</button>}
-          {quote.status === 'APPROVED' && (!quote._count || quote._count.salesOrders === 0) && <button onClick={handleCreateOrder} disabled={saving} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm disabled:opacity-50">Tạo đơn hàng</button>}
-          {quote._count && quote._count.salesOrders > 0 && <span className="px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium">Đã tạo đơn hàng</span>}
+          {quote.status === 'APPROVED' && (
+            <button onClick={handleCreateOrder} disabled={saving} className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm disabled:opacity-50">
+              {quote._count && quote._count.salesOrders > 0 ? 'Tạo thêm đơn hàng' : 'Tạo đơn hàng'}
+            </button>
+          )}
+          {quote._count && quote._count.salesOrders > 0 && <span className="px-3 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium">Đã có {quote._count.salesOrders} đơn hàng</span>}
           <div className="flex items-center gap-2 print:hidden bg-surface-100 px-3 py-1.5 rounded-lg mr-2">
             <input type="checkbox" id="showDiscount" checked={showDiscount} onChange={e => setShowDiscount(e.target.checked)} className="rounded text-brand-600" />
             <label htmlFor="showDiscount" className="text-sm cursor-pointer select-none">Hiện CK bản in</label>
