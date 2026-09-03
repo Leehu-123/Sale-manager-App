@@ -77,25 +77,30 @@ export const authOptions: NextAuthOptions = {
           const profileData = await profileRes.json()
           const userProfile = profileData.data
 
-          const rawRole = Array.isArray(userProfile.roles)
-            ? userProfile.roles[0]
-            : userProfile.roles?.[0]?.name
+          const allRoles: string[] = (
+            Array.isArray(userProfile.roles)
+              ? userProfile.roles
+              : (userProfile.roles ? [userProfile.roles] : [])
+          ).map((r: any) => String(typeof r === 'string' ? r : r?.name || '').toLowerCase()).filter(Boolean)
 
-          const roleString = String(rawRole || '').toLowerCase()
           const roleMap: Record<string, string> = {
             owner: 'ADMIN',
             admin: 'ADMIN',
             administrator: 'ADMIN',
             manager: 'MANAGER',
             sales: 'SALES',
+            kinhdoanh: 'SALES',
             user: 'SALES',
             sale_admin: 'SALE_ADMIN',
             sale_lead: 'SALE_LEAD',
             ketoan: 'ACCOUNTANT',
-            accountant: 'ACCOUNTANT'
+            accountant: 'ACCOUNTANT',
           }
 
-          const normalizedRole = roleMap[roleString] || roleString.toUpperCase()
+          // Order of preference for Sale App: admin > sale_admin > sale_lead > accountant > sales > others
+          const priority = ['owner', 'admin', 'administrator', 'sale_admin', 'sale_lead', 'accountant', 'ketoan', 'sales', 'kinhdoanh', 'manager', 'user']
+          const chosenRole = allRoles.find(r => priority.includes(r)) || allRoles[0] || ''
+          const normalizedRole = roleMap[chosenRole] || chosenRole.toUpperCase()
 
           return {
             id: userProfile.id,
@@ -121,12 +126,29 @@ export const authOptions: NextAuthOptions = {
         token.companyId = user.companyId
         token.accessToken = user.accessToken
       }
+      if (token.role) {
+        const r = String(token.role).toLowerCase()
+        if (r === 'kinhdoanh' || r === 'sales' || r === 'user') token.role = 'SALES'
+        else if (r === 'admin' || r === 'owner' || r === 'administrator') token.role = 'ADMIN'
+        else if (r === 'sale_admin') token.role = 'SALE_ADMIN'
+        else if (r === 'sale_lead') token.role = 'SALE_LEAD'
+        else if (r === 'accountant' || r === 'ketoan') token.role = 'ACCOUNTANT'
+      }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
-        session.user.role = token.role as string
+        let role = (token.role as string) || ''
+        if (role) {
+          const r = role.toLowerCase()
+          if (r === 'kinhdoanh' || r === 'sales' || r === 'user') role = 'SALES'
+          else if (r === 'admin' || r === 'owner' || r === 'administrator') role = 'ADMIN'
+          else if (r === 'sale_admin') role = 'SALE_ADMIN'
+          else if (r === 'sale_lead') role = 'SALE_LEAD'
+          else if (r === 'accountant' || r === 'ketoan') role = 'ACCOUNTANT'
+        }
+        session.user.role = role
         session.user.teamId = (token.teamId as string) || null
         session.user.companyId = token.companyId as string
         session.user.accessToken = token.accessToken as string
