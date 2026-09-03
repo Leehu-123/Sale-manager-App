@@ -40,22 +40,30 @@ const mapRole = (role?: string) => {
   return normalized ? normalized.toUpperCase() : 'UNKNOWN'
 }
 
-const normalizeUser = (user: ApiUser): User => ({
-  id: user.id || '',
-  email: user.email || '',
-  name: user.name || user.fullName || user.email || '',
-  phone: user.phone || '',
-  role: mapRole(user.role || user.roles?.[0]),
-  status: user.status || (user.isActive === false || user.deletedAt ? 'INACTIVE' : 'ACTIVE'),
-  teamId: user.teamId,
-  team: user.team,
-  createdAt: user.createdAt || new Date().toISOString(),
-  _count: {
-    customers: user._count?.customers ?? 0,
-    opportunities: user._count?.opportunities ?? 0,
-    orders: user._count?.orders ?? 0,
-  },
-})
+const SALE_ROLES = ['admin', 'sale_admin', 'sale_lead', 'sales', 'accountant', 'manager', 'owner']
+
+const normalizeUser = (user: ApiUser): User => {
+  // Pick the sale-relevant role first (users can have both warehouse and sale roles)
+  const allRoles = user.roles || (user.role ? [user.role] : [])
+  const saleRole = allRoles.find(r => SALE_ROLES.includes(r.toLowerCase())) || allRoles[0]
+  
+  return {
+    id: user.id || '',
+    email: user.email || '',
+    name: user.name || user.fullName || user.email || '',
+    phone: user.phone || '',
+    role: mapRole(saleRole),
+    status: user.status || (user.isActive === false || user.deletedAt ? 'INACTIVE' : 'ACTIVE'),
+    teamId: user.teamId,
+    team: user.team,
+    createdAt: user.createdAt || new Date().toISOString(),
+    _count: {
+      customers: user._count?.customers ?? 0,
+      opportunities: user._count?.opportunities ?? 0,
+      orders: user._count?.orders ?? 0,
+    },
+  }
+}
 
 const normalizeTeam = (team: ApiTeam): Team => ({
   id: team.id || '',
