@@ -26,7 +26,7 @@ export default function CreateQuotePage() {
   const [terms, setTerms] = useState('')
   const [notes, setNotes] = useState('')
   const [discount, setDiscount] = useState(0)
-  const [items, setItems] = useState<QuoteItem[]>([{ description: '', thickness: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])
+  const [items, setItems] = useState<QuoteItem[]>([{ description: '', thickness: '', quantity: 1, unitPrice: 0, total: 0 }])
   const [discountRate, setDiscountRate] = useState(0)
   const [stockMap, setStockMap] = useState<Record<string, { physicalStock: number; reservedStock: number; incomingStock?: number; availableStock: number }>>({})
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
@@ -197,7 +197,7 @@ export default function CreateQuotePage() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-semibold">Hạng mục báo giá</h3>
-            <button type="button" onClick={() => setItems([...items, { description: '', thickness: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }])} className="flex items-center gap-1 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm">
+            <button type="button" onClick={() => setItems([...items, { description: '', thickness: '', quantity: 1, unitPrice: 0, total: 0 }])} className="flex items-center gap-1 px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm">
               <Plus size={14} /> Thêm dòng
             </button>
           </div>
@@ -244,7 +244,7 @@ export default function CreateQuotePage() {
                     <td className="p-2 text-center text-xs font-semibold text-brand-600 bg-surface-50">{(item.quantity || 0) * (item.itemsPerPackage || 1)}</td>
                     <td className="p-2"><input type="number" value={item.area || ''} disabled className="w-full border rounded px-2 py-1 text-xs bg-surface-50 font-medium" /></td>
                     <td className="p-2"><input type="number" value={item.unitPrice} onChange={e => updateItem(i, 'unitPrice', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs" /></td>
-                    <td className="p-2"><input type="number" value={item.discount || ''} onChange={e => updateItem(i, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600" placeholder="CK" /></td>
+                    <td className="p-2"><input type="number" value={item.discount ?? ''} onChange={e => updateItem(i, 'discount', e.target.value === '' ? undefined : (parseFloat(e.target.value) || 0))} className="w-full border rounded px-2 py-1 text-xs text-red-600" placeholder="CK" /></td>
                     <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
                     <td className="p-2">{items.length > 1 && <button type="button" onClick={() => setItems(items.filter((_, j) => j !== i))} className="p-1 hover:bg-red-50 rounded text-red-400"><Trash2 size={14} /></button>}</td>
                   </tr>
@@ -256,13 +256,13 @@ export default function CreateQuotePage() {
             <div className="max-w-md ml-auto space-y-2 text-sm">
               {totalArea > 0 && <div className="flex justify-between text-surface-500"><span>Tổng diện tích:</span><span>{totalArea.toFixed(3)} m2</span></div>}
               <div className="flex justify-between"><span>Tổng hạng mục:</span><span className="font-medium">{formatCurrency(itemsTotal)}</span></div>
-              <div className="flex justify-between items-center"><span>Vận chuyển:</span><input type="number" value={shippingCost} onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
-              <div className="flex justify-between items-center"><span>Thi công:</span><input type="number" value={installationCost} onChange={e => setInstallationCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
+              <div className="flex justify-between items-center"><span>Vận chuyển:</span><input type="number" placeholder="0" value={shippingCost || ''} onChange={e => setShippingCost(e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0))} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
+              <div className="flex justify-between items-center"><span>Thi công:</span><input type="number" placeholder="0" value={installationCost || ''} onChange={e => setInstallationCost(e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0))} className="w-32 border rounded px-2 py-1 text-xs text-right" /></div>
               <div className="flex justify-between items-center text-red-600">
                 <span className="flex items-center gap-2">Chiết khấu tổng: 
-                  <input type="number" placeholder="%" value={discountRate || ''} onChange={e => { const rate = parseFloat(e.target.value) || 0; setDiscountRate(rate); setDiscount(Math.round(subtotalBeforeDiscount * rate / 100)) }} className="w-16 border rounded px-2 py-1 text-xs text-right" /> %
+                  <input type="number" placeholder="%" value={discountRate || ''} onChange={e => { const rate = e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0); setDiscountRate(e.target.value === '' ? 0 : rate); setDiscount(rate > 0 ? Math.round(subtotalBeforeDiscount * rate / 100) : 0); }} className="w-16 border rounded px-2 py-1 text-xs text-right" /> %
                 </span>
-                <input type="number" value={discount} onChange={e => { setDiscount(parseFloat(e.target.value) || 0); setDiscountRate(0) }} className="w-32 border rounded px-2 py-1 text-xs text-right text-red-600" />
+                <input type="number" placeholder="0" value={discount || ''} onChange={e => { setDiscount(e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0)); setDiscountRate(0); }} className="w-32 border rounded px-2 py-1 text-xs text-right text-red-600" />
               </div>
               <div className="flex justify-between border-t pt-2"><span>Trước VAT:</span><span className="font-semibold">{formatCurrency(subtotal)}</span></div>
               <div className="flex justify-between items-center"><span>VAT:</span><input type="number" value={vatRate} onChange={e => setVatRate(parseFloat(e.target.value) || 0)} className="w-16 border rounded px-2 py-1 text-xs text-right" /><span>% = {formatCurrency(vatAmount)}</span></div>

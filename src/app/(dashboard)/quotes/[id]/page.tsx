@@ -388,7 +388,7 @@ export default function QuoteDetailPage() {
                       <div className="hidden print:block">{formatCurrency(item.unitPrice)}</div>
                     </td>
                     <td className={`p-2 ${!showDiscount ? 'print:hidden' : ''}`}>
-                      <input type="number" value={item.discount || ''} onChange={e => updateItem(index, 'discount', parseFloat(e.target.value) || 0)} className="w-full border rounded px-2 py-1 text-xs text-red-600 print:hidden" placeholder="CK" />
+                      <input disabled={quote.status !== 'DRAFT'} type="number" value={item.discount ?? ''} onChange={e => updateItem(index, 'discount', e.target.value === '' ? undefined : (parseFloat(e.target.value) || 0))} className="w-full border rounded px-2 py-1 text-xs text-red-600 print:hidden" placeholder="CK" />
                       <div className="hidden print:block text-red-600">{item.discount ? formatCurrency(item.discount) : '-'}</div>
                     </td>
                     <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
@@ -415,20 +415,28 @@ export default function QuoteDetailPage() {
             </div>
             <div className="flex justify-between text-sm items-center gap-2">
               <span>Vận chuyển:</span>
-              <input type="number" value={shippingCost} onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
-              <span className="hidden print:inline">{formatCurrency(shippingCost)}</span>
+              {quote.status === 'DRAFT' ? (
+                <input type="number" placeholder="0" value={shippingCost || ''} onChange={e => setShippingCost(e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0))} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
+              ) : null}
+              <span className={quote.status === 'DRAFT' ? 'hidden print:inline' : ''}>{formatCurrency(shippingCost)}</span>
             </div>
             <div className="flex justify-between text-sm items-center gap-2">
               <span>Thi công/lắp đặt:</span>
-              <input type="number" value={installationCost} onChange={e => setInstallationCost(parseFloat(e.target.value) || 0)} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
-              <span className="hidden print:inline">{formatCurrency(installationCost)}</span>
+              {quote.status === 'DRAFT' ? (
+                <input type="number" placeholder="0" value={installationCost || ''} onChange={e => setInstallationCost(e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0))} className="w-32 border rounded px-2 py-1 text-xs text-right print:hidden" />
+              ) : null}
+              <span className={quote.status === 'DRAFT' ? 'hidden print:inline' : ''}>{formatCurrency(installationCost)}</span>
             </div>
             <div className={`flex justify-between text-sm items-center gap-2 text-red-600 ${!showDiscount && discount > 0 ? 'print:hidden' : ''}`}>
               <span className="flex items-center gap-2">Chiết khấu tổng:
-                  <span className="print:hidden"><input type="number" placeholder="%" value={discountRate || ''} onChange={e => { const rate = parseFloat(e.target.value) || 0; setDiscountRate(rate); setDiscount(Math.round(subtotalBeforeDiscount * rate / 100)) }} className="w-16 border rounded px-2 py-1 text-xs text-right" /> %</span>
+                {quote.status === 'DRAFT' ? (
+                  <span className="print:hidden"><input type="number" placeholder="%" value={discountRate || ''} onChange={e => { const rate = e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0); setDiscountRate(rate); setDiscount(rate > 0 ? Math.round(subtotalBeforeDiscount * rate / 100) : 0); }} className="w-16 border rounded px-2 py-1 text-xs text-right" /> %</span>
+                ) : null}
               </span>
-              <input type="number" value={discount} onChange={e => { setDiscount(parseFloat(e.target.value) || 0); setDiscountRate(0) }} className="w-32 border rounded px-2 py-1 text-xs text-right text-red-600 print:hidden" />
-              <span className="hidden print:inline">{discount > 0 ? '-' + formatCurrency(discount) : '0 ₫'}</span>
+              {quote.status === 'DRAFT' ? (
+                <input type="number" placeholder="0" value={discount || ''} onChange={e => { setDiscount(e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0)); setDiscountRate(0); }} className="w-32 border rounded px-2 py-1 text-xs text-right text-red-600 print:hidden" />
+              ) : null}
+              <span className={quote.status === 'DRAFT' ? 'hidden print:inline' : ''}>{discount > 0 ? '-' + formatCurrency(discount) : '0 ₫'}</span>
             </div>
             <div className="flex justify-between text-sm border-t pt-2">
               <span>Tổng trước VAT:</span>
