@@ -4,13 +4,20 @@ const conn = new Client();
 const commands = [
   "echo '=== Pull & Rebuild Sale App ==='",
   "cd /var/www/Sale-manager-App && git fetch origin && git reset --hard origin/main",
+  "mkdir -p /var/www/Sale-manager-App/data",
+  "chown -R 1001:1001 /var/www/Sale-manager-App/data",
+  "chmod -R 777 /var/www/Sale-manager-App/data",
   "cd /var/www/Sale-manager-App && docker compose -f docker-compose.prod.yml build web_app && docker compose -f docker-compose.prod.yml up -d web_app",
+  "chown -R 1001:1001 /var/www/Sale-manager-App/data",
+  "chmod -R 777 /var/www/Sale-manager-App/data",
+  "echo '=== Sale App permissions check ==='",
+  "ls -la /var/www/Sale-manager-App/data",
   "echo '=== Sale App logs ==='",
   "docker logs sale_manager_app --tail 10"
 ].join(" ; ");
 
 conn.on('ready', () => {
-  console.log('Connected. Starting deploy...');
+  console.log('Connected. Starting deploy with permanent permission fix...');
   conn.exec(commands, (err, stream) => {
     if (err) { console.error(err); conn.end(); return; }
     stream.on('close', (code) => {
