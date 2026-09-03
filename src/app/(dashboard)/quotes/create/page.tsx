@@ -133,21 +133,23 @@ export default function CreateQuotePage() {
     if (!customerId) { alert('Vui lòng chọn khách hàng'); return }
     if (!items.some(i => i.description)) { alert('Vui lòng thêm ít nhất 1 hạng mục'); return }
     
-    // Clean up to avoid forbidNonWhitelisted validation error
+    // Clean up to strictly only allowed QuoteItemDto fields
     const cleanedItems = items.map(item => {
-      const { productId, total, ...rest } = item;
-      const cleanItem: any = { ...rest };
-      if (productId) cleanItem.productId = productId;
-      
-      // Aggressively clean up empty strings and zeros for optional fields
-      if (cleanItem.thickness === "") delete cleanItem.thickness;
-      if (cleanItem.unit === "") delete cleanItem.unit;
-      if (cleanItem.specification === "") delete cleanItem.specification;
-      if (!cleanItem.length) delete cleanItem.length;
-      if (!cleanItem.width) delete cleanItem.width;
-      if (!cleanItem.area) delete cleanItem.area;
-      if (!cleanItem.discount) delete cleanItem.discount;
-      
+      const cleanItem: any = {
+        description: item.description,
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice || 0,
+      };
+      if (item.productId) cleanItem.productId = item.productId;
+      if (item.thickness) cleanItem.thickness = String(item.thickness);
+      if (item.unit) cleanItem.unit = item.unit;
+      if (item.specification) cleanItem.specification = item.specification;
+      if (item.length) cleanItem.length = item.length;
+      if (item.width) cleanItem.width = item.width;
+      if (item.area) cleanItem.area = item.area;
+      if (item.discount !== undefined && item.discount !== null && Number(item.discount) > 0) {
+        cleanItem.discount = Number(item.discount);
+      }
       return cleanItem;
     });
 
