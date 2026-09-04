@@ -45,6 +45,7 @@ export default function TripDetailPage() {
 
   const [trip, setTrip] = useState<TripDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
 
   // Modals state
   const [showReportModal, setShowReportModal] = useState(false)
@@ -80,6 +81,8 @@ export default function TripDetailPage() {
   useEffect(() => { fetchTrip() }, [params.id])
 
   const handleStatusChange = async (newStatus: string) => {
+    if (updatingStatus) return
+    setUpdatingStatus(true)
     try {
       let endpoint = '';
       if (newStatus === 'ACCOUNTANT_APPROVED') endpoint = 'accountant-approve';
@@ -118,8 +121,9 @@ export default function TripDetailPage() {
         });
       }
 
-      fetchTrip()
+      await fetchTrip()
     } catch { alert('Lỗi cập nhật trạng thái') }
+    finally { setUpdatingStatus(false) }
   }
 
   const handleGetLocation = () => {
@@ -268,8 +272,8 @@ export default function TripDetailPage() {
           {/* Bước 1: Kế toán duyệt chi phí (PROPOSED → ACCOUNTANT_APPROVED) */}
           {trip.status === 'PROPOSED' && canAccountantApprove && (
             <>
-              <button onClick={() => handleStatusChange('REJECTED')} className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50">Từ chối</button>
-              <button onClick={() => handleStatusChange('ACCOUNTANT_APPROVED')} className="flex-1 sm:flex-none px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-medium hover:bg-teal-600 flex items-center gap-1.5"><CheckCircle size={15} /> KT Duyệt chi phí</button>
+              <button disabled={updatingStatus} onClick={() => handleStatusChange('REJECTED')} className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">Từ chối</button>
+              <button disabled={updatingStatus} onClick={() => handleStatusChange('ACCOUNTANT_APPROVED')} className="flex-1 sm:flex-none px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-medium hover:bg-teal-600 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"><CheckCircle size={15} /> {updatingStatus ? 'Đang duyệt...' : 'KT Duyệt chi phí'}</button>
             </>
           )}
           {/* Chờ KT duyệt - hiện thông báo cho lãnh đạo */}
@@ -279,8 +283,8 @@ export default function TripDetailPage() {
           {/* Bước 2: Lãnh đạo phê duyệt (ACCOUNTANT_APPROVED → APPROVED) */}
           {trip.status === 'ACCOUNTANT_APPROVED' && canLeaderApprove && (
             <>
-              <button onClick={() => handleStatusChange('REJECTED')} className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50">Từ chối</button>
-              <button onClick={() => handleStatusChange('APPROVED')} className="flex-1 sm:flex-none px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 flex items-center gap-1.5"><CheckCircle size={15} /> LĐ Phê duyệt</button>
+              <button disabled={updatingStatus} onClick={() => handleStatusChange('REJECTED')} className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">Từ chối</button>
+              <button disabled={updatingStatus} onClick={() => handleStatusChange('APPROVED')} className="flex-1 sm:flex-none px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"><CheckCircle size={15} /> {updatingStatus ? 'Đang duyệt...' : 'LĐ Phê duyệt'}</button>
             </>
           )}
           {/* KT thấy badge đã duyệt - chờ LĐ */}
