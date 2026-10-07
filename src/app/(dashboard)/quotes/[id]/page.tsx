@@ -313,7 +313,7 @@ export default function QuoteDetailPage() {
           <h3 className="font-bold text-lg text-brand-800">Hạng mục báo giá</h3>
         </div>
         <div className="overflow-x-auto print:overflow-visible">
-          <table className="w-full text-sm min-w-[1000px] print:min-w-0">
+          <table className="w-full text-sm min-w-[1000px] print:min-w-0 print:table-fixed">
             <thead className="bg-surface-50">
               <tr>
                 <th className="p-2 text-left text-xs font-medium text-surface-500 w-8">#</th>
